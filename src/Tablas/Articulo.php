@@ -3,19 +3,16 @@
 namespace App\Tablas;
 
 use PDO;
-use App\Tablas\Etiqueta;
 
 class Articulo extends Modelo
 {
     protected static string $tabla = 'articulos';
 
-    private $id;
+    public $id;
     private $codigo;
     private $descripcion;
     private $precio;
     private $stock;
-    private $id_categoria;
-    private Etiqueta $etiqueta;
 
     public function __construct(array $campos)
     {
@@ -24,8 +21,6 @@ class Articulo extends Modelo
         $this->descripcion = $campos['descripcion'];
         $this->precio = $campos['precio'];
         $this->stock = $campos['stock'];
-        $this->id_categoria = $campos['id_categoria'];
-        $this->etiqueta = Etiqueta::obtener($campos['id']);
     }
 
     public static function existe(int $id, ?PDO $pdo = null): bool
@@ -53,27 +48,19 @@ class Articulo extends Modelo
         return $this->stock;
     }
 
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    public function getCategoriaNombre(PDO $pdo)
-    {
-        $sent = $pdo->prepare("SELECT categoria FROM categorias WHERE id = :id_categoria");
-        $sent->execute(['id_categoria' => $this->id_categoria]);
-        return $sent->fetchColumn();
-    }
-
-    public function getEtiquetaNombre(?PDO $pdo = null)
+    public function getCategoria(?PDO $pdo = null)
     {
         $pdo = $pdo ?? conectar();
-        $sent = $pdo->prepare("SELECT e.etiqueta 
-                                FROM etiquetas e JOIN articulos_etiquetas ae ON (e.id = ae.id_etiqueta)
-                                WHERE ae.id_articulo = :id_articulo");
-        $sent->execute(['id_articulo' => $this->id]);
-        $etiquetas = $sent->fetchAll(PDO::FETCH_COLUMN);
-        return implode(', ', $etiquetas);
+        $sent = $pdo->prepare("
+            SELECT c.nombre
+            FROM articulos_categorias ac
+            JOIN categorias c ON ac.categoria_id = c.id
+            WHERE ac.articulo_id = :articulo_id
+        ");
+    
+        $sent->execute(['articulo_id' => $this->id]);
+        $categorias = $sent->fetchAll(PDO::FETCH_COLUMN);
+        return implode(', ', $categorias);
     }
 
 }

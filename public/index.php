@@ -11,101 +11,60 @@
 </head>
 
 <body>
-<?php
+    <?php
     require '../vendor/autoload.php';
+
     $carrito = unserialize(carrito());
-
-    $categoria = obtener_get('categoria');
-    $etiquetas = obtener_get('etiqueta');
-    $valoracion = obtener_get('valoracion');
-
+    $categoria_id = obtener_get('categoria');
 
     $pdo = conectar();
-
+    
     $where = [];
     $execute = [];
-    
-    if (isset($categoria) && $categoria != '') {
-        $where[] = 'id_categoria = :categoria';
-        $execute[':categoria'] = $categoria;
-    }
-    
-    $where = !empty($where) ? ' AND ' . implode(' AND ', $where) : '';
-    
-    if (isset($etiquetas) && $etiquetas != '') {
-        $etiquetas_validas = [];
-        $where_etiquetas = [];
-        $etiquetas = explode(' ', $etiquetas);
 
-        foreach ($etiquetas as $etiqueta) {
-            $sent = $pdo->prepare("SELECT e.id
-                                    FROM articulos_etiquetas ae JOIN etiquetas e ON (ae.id_etiqueta = e.id)
-                                    WHERE lower(unaccent(etiqueta)) LIKE lower(unaccent(:etiqueta))");
-            $sent->execute([':etiqueta' => $etiqueta]);
-            $etiquevaValida = $sent->fetchColumn();
-            if ($etiquevaValida) {
-                array_push($etiquetas_validas, $etiquevaValida);
-            }
-        }
-
-         if (!empty($etiquetas_validas)) {
-            $execute[':etiquetas'] = implode(',', $etiquetas_validas);
-            $sent = $pdo->prepare("SELECT a.*, c.categoria, c.id as catid
-                                    FROM articulos a JOIN categorias c ON (a.id_categoria = c.id)
-                                    $where AND a.id IN (SELECT ae.id_articulo FROM articulos_etiquetas ae
-                                                        WHERE ae.id_etiqueta IN (:etiquetas))");
-            $sent->execute($execute);
-        }
-
-    } else {
-        $sent = $pdo->prepare("SELECT a.*, c.categoria, c.id as catid
-                                FROM articulos a JOIN categorias c ON (a.id_categoria = c.id)
-                                $where");
-        $sent->execute($execute);
+    if (isset($categoria_id) && $categoria_id != '') {
+        $where[] = 'categoria_id = :categoria';
+        $execute[':categoria'] = $categoria_id;
     }
 
+    $where = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+    $sent =   $sent = $pdo->prepare("SELECT * FROM articulos JOIN articulos_categorias ON articulos.id = articulos_categorias.articulo_id $where ORDER BY codigo");
+
+     $sent->execute($execute);
     ?>
     <div class="container mx-auto">
         <?php require '../src/_menu.php' ?>
         <?php require '../src/_alerts.php' ?>
-        <div>
-            <form action="" method="GET">
-                <fieldset>
-                    <legend><b>Criterios de búsqueda</b></legend>
-                    <br>
-                    <div class="flex mb-3 font-normal text-gray-700 dark:text-gray-400">
-                        <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
-                            Categoría:
-                            <select name="categoria" id="categoria" class="border text-sm rounded-lg w-full p-2.5">
-                                <?php
-                                $sent2 = $pdo->query("SELECT * FROM categorias");
-                                ?>
-                                <option value="">Todas las categorías</option>
-                                <?php foreach ($sent2 as $fila) : ?>
-                                    <option value=<?= hh($fila['id']) ?> <?= ($fila['id'] == $categoria) ? 'selected' : '' ?>>
-                                        <?= hh($fila['categoria']) ?>
-                                    </option>
-                                <?php endforeach ?>
-                            </select>
-                        </label>
-                        <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
-                            Etiquetas:
-                            <input type="text" name="etiqueta" value="<?= isset($etiquetas) && is_array($etiquetas) ? implode(' ', $etiquetas) : '' ?>" class="border text-sm rounded-lg w-full p-2.5">
-
-                    </div>
-                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Buscar</button>
-                </fieldset>
-            </form>
-        </div>
+        <form action="" method="get">
+            <fieldset>
+                <label>
+                    Categorias:
+                    <select name="categoria" id=categoria>
+                    <option value="" selected></option>
+                        <?php
+                        $categorias = $pdo->query("SELECT * FROM categorias");
+                        foreach ($categorias as $fila) :
+                        ?>
+                            <option value="<?= hh($fila['id'])  ?>" <?= ($fila['id'] == $categoria_id) ? 'selected' : '' ?>><?= hh($fila['nombre']) ?></option>
+                            
+                        <?php endforeach ?>
+                    </select>
+                </label>
+                <br>
+                <button type="submit" class="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900">Buscar</button>
+            </fieldset>
+        </form><br>
         <div class="flex">
             <main class="flex-1 grid grid-cols-3 gap-4 justify-center justify-items-center">
                 <?php foreach ($sent as $fila) : ?>
                     <div class="p-6 max-w-xs min-w-full bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700">
-                        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?> - <?= hh($fila['precio']) ?> € </h5>
-                        <p class="mb-3 font-normal text-gray-700 dark:text-gray-400"><?= hh($fila['categoria']) ?></p>
-                        <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Existencias: <?= hh($fila['stock']) ?></p>
+                        <a href="#">
+                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?></h5>
+                        </a>
+                        <p class="mb-3 font-normal text-gray-700 dark:text-gray-400"><?= hh($fila['descripcion']) ?></p>
+                        <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Existencias: <?= hh($fila['stock']) ?> </p>
                         <?php if ($fila['stock'] > 0) : ?>
-                            <a href="/insertar_en_carrito.php?id=<?= $fila['id'] ?>&categoria=<?= hh($categoria) ?>&etiqueta=<?= hh($etiqueta) ?>" class="inline-flex items-center py-2 px-3.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            <a href="/insertar_en_carrito.php?id=<?= $fila['id'] ?>&categoria=<?= hh($categoria_id) ?>" class="inline-flex items-center py-2 px-3.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                 Añadir al carrito
                                 <svg aria-hidden="true" class="ml-3 -mr-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -116,50 +75,6 @@
                                 Sin existencias
                             </a>
                         <?php endif ?>
-                        <div class="flex mb-3 font-normal text-gray-700 dark:text-gray-400">
-                            <form action="valorar_articulo.php" method="GET">
-                                <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
-                                    Valoración:
-                                    <?php
-                                    $usuario = \App\Tablas\Usuario::logueado();
-                                    $id_usuario = $usuario ? $usuario->id : null;
-
-                                    $sent3 = $pdo->prepare("SELECT *
-FROM valoraciones
-WHERE usuario_id = :id_usuario AND articulo_id = :id_articulo");
-                                    $sent3->execute(['id_usuario' => $id_usuario, 'id_articulo' => $fila['id']]);
-                                    $valoracion_usuario = $sent3->fetch(PDO::FETCH_ASSOC);
-                                    ?>
-                                    <select name="valoracion" id="valoracion">
-                                        <option value="" <?= (!$id_usuario) ? 'selected' : '' ?>></option>
-                                        <?php for ($i = 1; $i <= 5; $i++) : ?>
-                                            <option value="<?= $i ?>" <?= ($valoracion_usuario && $valoracion_usuario['valoracion'] == $i) ? 'selected' : '' ?>><?= $i ?></option>
-                                        <?php endfor ?>
-                                    </select>
-                                </label>
-                                <input type="hidden" name="articulo_id" value="<?= $fila['id'] ?>">
-                                <input type="hidden" name="usuario_id" value="<?= $id_usuario ?>">
-
-                                <?php if (!\App\Tablas\Usuario::esta_logueado()) : ?>
-                                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" disabled>Votar</button>
-                                <?php else : ?>
-                                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Votar</button>
-                                <?php endif ?>
-                            </form>
-                            <div>
-                                <label class="block text-m font-medium pl-3 ml-3">
-                                    Valoración media:
-                                    <?php
-                                    $sent4 = $pdo->prepare("SELECT avg(valoracion)::numeric(10,2)
-FROM valoraciones
-WHERE articulo_id = :id_articulo");
-                                    $sent4->execute(['id_articulo' => $fila['id']]);
-                                    $valoracionMedia = $sent4->fetchColumn();
-                                    ?>
-                                    <p class="mb-3 pl-3 font-normal text-gray-700 dark:text-gray-400"><?= hh($valoracionMedia) ?></p>
-                                </label>
-                            </div>
-                        </div>
                     </div>
                 <?php endforeach ?>
             </main>
@@ -179,11 +94,8 @@ WHERE articulo_id = :id_articulo");
                                     $cantidad = $linea->getCantidad();
                                     ?>
                                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                        <td class="py-4 px-6"><?= $articulo->getDescripcion() ?> <br>
-                                            <?= $articulo->getCategoriaNombre($pdo) ?>
-                                            <?= $articulo->getEtiquetaNombre($pdo) ?>
-
-                                        </td>
+                                        <td class="py-4 px-6"><?= $articulo->getDescripcion() ?><br>
+                                        <?= $articulo->getCategoria() ?></td>
                                         <td class="py-4 px-6 text-center"><?= $cantidad ?></td>
                                     </tr>
                                 <?php endforeach ?>

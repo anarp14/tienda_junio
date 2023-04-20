@@ -1,25 +1,18 @@
 <?php
+namespace App\Tablas;
 
-use App\Tablas\Modelo;
+use PDO;
 
 class Categoria extends Modelo
 {
     protected static string $tabla = 'categorias';
 
     public $id;
-    public $categoria;
+    public $nombre;
 
     public function __construct(array $campos)
     {
         $this->id = $campos['id'];
-        $this->categoria = $campos['categoria'];
-    }
-
-    public static function obtener(int $id, ?PDO $pdo = null): ?self
-    {
-        $sent = $pdo->prepare("SELECT * FROM categorias WHERE id = :id");
-        $sent->execute(['id' => $id]);
-        $registro = $sent->fetch();
-        return $registro ? new self($registro) : null;
+        $this->nombre = $campos['nombre'];
     }
 }

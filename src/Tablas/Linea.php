@@ -11,7 +11,7 @@ class Linea extends Modelo
 
     public function __construct(array $campos)
     {
-        $this->articulo = Articulo::obtener($campos['id_articulo']);
+        $this->articulo = Articulo::obtener($campos['articulo_id']);
         $this->cantidad = $campos['cantidad'];
     }
 
