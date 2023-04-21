@@ -35,8 +35,8 @@ if (isset($stock) && $stock != '') {
 }
 
 if (isset($categoria) && $categoria != '') {
-    $values[] = ':id_categoria';
-    $execute[':id_categoria'] = $categoria;
+    $values[] = ':categoria_id';
+    $execute[':categoria_id'] = $categoria;
 }
 
 
@@ -44,7 +44,7 @@ $values = !empty($values) ? 'VALUES (' . implode(' , ', $values) . ')'  : '';
 
 
 try {
-    $sent = $pdo->prepare("INSERT INTO articulos (codigo, descripcion, precio, stock, id_categoria)
+    $sent = $pdo->prepare("INSERT INTO articulos (codigo, descripcion, precio, stock, categoria_id)
                             $values");
     $sent->execute($execute);
     $_SESSION['exito'] = 'El artículo se ha insertado correctamente.';
