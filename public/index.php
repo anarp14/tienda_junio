@@ -18,6 +18,8 @@
     $categoria = obtener_get('categoria');
     $etiquetas = obtener_get('etiqueta');
     $valoracion = obtener_get('valoracion');
+    $precio_min = obtener_get('precio_min');
+    $precio_max = obtener_get('precio_max');
 
 
     $where = '';
@@ -26,6 +28,17 @@
     $valid_etiquetas = [];
 
     $pdo = conectar();
+
+
+    if (isset($precio_min) && $precio_min != '') {
+        $where .= ' AND precio >= :precio_min';
+        $execute[':precio_min'] = $precio_min; 
+    }
+
+    if (isset($precio_max) && $precio_max != '') {
+        $where .= ' AND precio <= :precio_max';
+        $execute[':precio_max'] = $precio_max; 
+    }
 
     // si se ha enviado algún valor para las etiquetas se separan por espacio utilizando la función explode() y se itera sobre cada una de las etiquetas
     $etiquetas = isset($etiquetas) ? explode(" ", $etiquetas) : [];
@@ -69,11 +82,6 @@
     $having_mas_valoraciones = '';
     $cond = '';
     $condicion = '';
-    
-    if (isset($_GET['mas_valoraciones'])) {
-        $cond = ', count(usuario_id)';
-        $condicion = 'JOIN valoraciones val ON (val.articulo_id = articulos.id)';
-    }
 
     if ($mas_valoraciones) {
         $having_mas_valoraciones  = 'HAVING COUNT (usuario_id) >= ALL (SELECT DISTINCT COUNT (usuario_id) FROM valoraciones group by articulo_id)';
@@ -81,12 +89,29 @@
         $cond = ', count(usuario_id)';
     }
 
-    $sent = $pdo->prepare("SELECT articulos.*, c.categoria, c.id as catid $cond FROM articulos
+    $mayor_valoracion = isset($_GET['mayor_valoracion']) ? $_GET['mayor_valoracion'] : false;
+
+    $having_mayor_valoracion = '';
+    $cond2 = '';
+    $condicion2 = '';
+    $condicion3 = '';
+
+
+    if ($mayor_valoracion) {
+        $condicion2 = 'JOIN valoraciones val ON (val.articulo_id = articulos.id) ';
+        $condicion3 = 'ORDER BY AVG(valoracion) DESC LIMIT 1';
+        $cond2 = ', AVG(valoracion)';
+    }
+
+
+    $sent = $pdo->prepare("SELECT articulos.*, c.categoria, c.id as catid $cond $cond2 FROM articulos
         JOIN categorias c ON (articulos.categoria_id = c.id) 
         JOIN articulos_etiquetas ae ON (articulos.id = ae.articulo_id)
-        JOIN etiquetas e ON (ae.etiqueta_id = e.id) $condicion  $where $where_sin_valoracion
-        GROUP BY articulos.id, c.categoria, c.id 
-        $having  $having_mas_valoraciones ");
+        JOIN etiquetas e ON (ae.etiqueta_id = e.id) $condicion $condicion2 $where $where_sin_valoracion
+        GROUP BY articulos.id, c.categoria, c.id $condicion3
+        $having  $having_mas_valoraciones 
+       ");
+ 
     $sent->execute($execute);
 
 
@@ -118,13 +143,25 @@
                             Etiquetas:
                             <input type="text" name="etiqueta" value="<?= isset($etiquetas) && is_array($etiquetas) ? implode(' ', $etiquetas) : '' ?>" class="border text-sm rounded-lg w-full p-2.5">
                         </label>
-                        <label>
+                        <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
+                            Precio mínimo:
+                            <input type="text" name="precio_min" value="<?= isset($precio_min) ? $precio_min : '' ?>" class="border text-sm rounded-lg w-full p-2.5">
+                        </label>
+                        <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
+                            Precio máximo:
+                            <input type="text" name="precio_max" value="<?= isset($precio_max) ? $precio_max : '' ?>" class="border text-sm rounded-lg w-full p-2.5">
+                        </label>
+                    </div>
+                    <div class="flex mb-3 font-normal text-gray-700 dark:text-gray-400">
+                    <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
                             <input type="checkbox" name="sin_valoracion" value="1">
                             Mostrar sólo artículos sin valoración
                             <br>
-
                             <input type="checkbox" name="mas_valoraciones" value="2">
-                            Mostrar artículo/s con más valoraciones
+                            Mostrar artículo/s con más valoraciones <br>
+                            <input type="checkbox" name="mayor_valoracion" value="3">
+                            Mostrar sólo artículos con mayor valoración
+                            <br>
                         </label>
                     </div>
                     <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Buscar</button>
