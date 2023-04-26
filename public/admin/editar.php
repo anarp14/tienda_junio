@@ -66,11 +66,11 @@ if (isset($stock) && $stock != '') {
 }
 
 if (isset($categoria) && $categoria != '') {
-    $set[] = 'id_categoria = :id_categoria';
-    $execute[':id_categoria'] = $categoria;
+    $set[] = 'categoria_id = :categoria_id';
+    $execute[':categoria_id'] = $categoria;
 } else {
-    $set[] = 'id_categoria = :id_categoria';
-    $execute[':id_categoria'] = $anterior['id_categoria'];
+    $set[] = 'categoria_id = :categoria_id';
+    $execute[':categoria_id'] = $anterior['categoria_id'];
 }
 
 $set = !empty($set) ? 'SET ' . implode(', ', $set) : '';

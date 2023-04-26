@@ -14,7 +14,7 @@ class Articulo extends Modelo
     private $descripcion;
     private $precio;
     private $stock;
-    private $id_categoria;
+    private $categoria_id;
     private Etiqueta $etiqueta;
 
     public function __construct(array $campos)
@@ -24,7 +24,7 @@ class Articulo extends Modelo
         $this->descripcion = $campos['descripcion'];
         $this->precio = $campos['precio'];
         $this->stock = $campos['stock'];
-        $this->id_categoria = $campos['id_categoria'];
+        $this->categoria_id = $campos['categoria_id'];
         $this->etiqueta = Etiqueta::obtener($campos['id']);
     }
 
@@ -60,8 +60,8 @@ class Articulo extends Modelo
 
     public function getCategoriaNombre(PDO $pdo)
     {
-        $sent = $pdo->prepare("SELECT categoria FROM categorias WHERE id = :id_categoria");
-        $sent->execute(['id_categoria' => $this->id_categoria]);
+        $sent = $pdo->prepare("SELECT categoria FROM categorias WHERE id = :categoria_id");
+        $sent->execute(['categoria_id' => $this->categoria_id]);
         return $sent->fetchColumn();
     }
 
@@ -69,9 +69,9 @@ class Articulo extends Modelo
     {
         $pdo = $pdo ?? conectar();
         $sent = $pdo->prepare("SELECT e.etiqueta 
-                                FROM etiquetas e JOIN articulos_etiquetas ae ON (e.id = ae.id_etiqueta)
-                                WHERE ae.id_articulo = :id_articulo");
-        $sent->execute(['id_articulo' => $this->id]);
+                                FROM etiquetas e JOIN articulos_etiquetas ae ON (e.id = ae.etiqueta_id)
+                                WHERE ae.articulo_id = :articulo_id");
+        $sent->execute(['articulo_id' => $this->id]);
         $etiquetas = $sent->fetchAll(PDO::FETCH_COLUMN);
         return implode(', ', $etiquetas);
     }
