@@ -32,12 +32,12 @@
 
     if (isset($precio_min) && $precio_min != '') {
         $where .= ' AND precio >= :precio_min';
-        $execute[':precio_min'] = $precio_min; 
+        $execute[':precio_min'] = $precio_min;
     }
 
     if (isset($precio_max) && $precio_max != '') {
         $where .= ' AND precio <= :precio_max';
-        $execute[':precio_max'] = $precio_max; 
+        $execute[':precio_max'] = $precio_max;
     }
 
     // si se ha enviado algún valor para las etiquetas se separan por espacio utilizando la función explode() y se itera sobre cada una de las etiquetas
@@ -104,21 +104,18 @@
     }
 
 
-    $sent = $pdo->prepare("SELECT articulos.*, c.categoria, c.id as catid $cond $cond2 FROM articulos
-        JOIN categorias c ON (articulos.categoria_id = c.id) 
-        JOIN articulos_etiquetas ae ON (articulos.id = ae.articulo_id)
-        JOIN etiquetas e ON (ae.etiqueta_id = e.id) $condicion $condicion2 $where $where_sin_valoracion
-        GROUP BY articulos.id, c.categoria, c.id $condicion3
-        $having  $having_mas_valoraciones 
-       ");
- 
-    $sent->execute($execute);
-
-    var_dump($sent);
-
-
+    $sent = $pdo->prepare("SELECT articulos.*, c.categoria, c.id as catid $cond $cond2 
+    FROM articulos
+    JOIN categorias c ON (articulos.categoria_id = c.id) 
+    LEFT JOIN articulos_etiquetas ae ON (articulos.id = ae.articulo_id)
+    LEFT JOIN etiquetas e ON (ae.etiqueta_id = e.id)
+    $where $where_sin_valoracion
+    GROUP BY articulos.id, c.categoria, c.id $condicion3
+    $having  $having_mas_valoraciones 
     
+       ");
 
+    $sent->execute($execute);
 
     ?>
     <div class="container mx-auto">
@@ -158,7 +155,7 @@
                         </label>
                     </div>
                     <div class="flex mb-3 font-normal text-gray-700 dark:text-gray-400">
-                    <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
+                        <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
                             <input type="checkbox" name="sin_valoracion" value="1">
                             Mostrar sólo artículos sin valoración
                             <br>
@@ -181,7 +178,7 @@
                         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400"><?= hh($fila['categoria']) ?></p>
                         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Existencias: <?= hh($fila['stock']) ?></p>
                         <?php if ($fila['stock'] > 0) : ?>
-                            <a href="/insertar_en_carrito.php?id=<?= $fila['id'] ?>&categoria=<?= hh($categoria) ?>&etiqueta=<?= hh($etiqueta) ?>" class="inline-flex items-center py-2 px-3.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            <a href="/insertar_en_carrito.php?id=<?= $fila['id'] ?>&categoria=<?= hh($categoria) ?>&etiqueta=<?= hh(implode(' ', $etiquetas)) ?>" class="inline-flex items-center py-2 px-3.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                 Añadir al carrito
                                 <svg aria-hidden="true" class="ml-3 -mr-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>

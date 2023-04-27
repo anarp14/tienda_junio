@@ -96,6 +96,7 @@ INSERT INTO etiquetas (etiqueta)
 INSERT INTO articulos_etiquetas (articulo_id, etiqueta_id)
     VALUES (1, 6),
             (1, 4),
+            (1, 5),
             (2, 6),
             (2, 5),
             (3, 7),
@@ -103,5 +104,4 @@ INSERT INTO articulos_etiquetas (articulo_id, etiqueta_id)
             (4, 7),
             (4, 1),
             (5, 3),
-            (5, 8),
-            (6, 8);
+            (5, 8);
