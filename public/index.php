@@ -156,12 +156,12 @@
                     </div>
                     <div class="flex mb-3 font-normal text-gray-700 dark:text-gray-400">
                         <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
-                            <input type="checkbox" name="sin_valoracion" value="1">
+                            <input type="radio" name="sin_valoracion" value="1">
                             Mostrar sólo artículos sin valoración
                             <br>
-                            <input type="checkbox" name="mas_valoraciones" value="2">
+                            <input type="radio" name="mas_valoraciones" value="2">
                             Mostrar artículo/s con más valoraciones <br>
-                            <input type="checkbox" name="mayor_valoracion" value="3">
+                            <input type="radio" name="mayor_valoracion" value="3">
                             Mostrar sólo artículos con mayor valoración
                             <br>
                         </label>
@@ -224,8 +224,8 @@
                                     Valoración media:
                                     <?php
                                     $sent4 = $pdo->prepare("SELECT avg(valoracion)::numeric(10,2)
-FROM valoraciones
-WHERE articulo_id = :id_articulo");
+                                                        FROM valoraciones
+                                                        WHERE articulo_id = :id_articulo");
                                     $sent4->execute(['id_articulo' => $fila['id']]);
                                     $valoracionMedia = $sent4->fetchColumn();
                                     ?>

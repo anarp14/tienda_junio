@@ -62,6 +62,15 @@ CREATE TABLE articulos_facturas (
     PRIMARY KEY (articulo_id, factura_id)
 );
 
+DROP TABLE IF EXISTS comentarios CASCADE;
+CREATE TABLE comentarios (
+    fecha_creacion timestamp  NOT NULL DEFAULT localtimestamp(0),
+    texto       varchar(255),
+    usuario_id bigint NOT NULL REFERENCES usuarios (id),
+    articulo_id bigint NOT NULL REFERENCES articulos(id),
+    PRIMARY KEY (articulo_id, usuario_id)
+);
+
 -- Carga inicial de datos de prueba:
 
 INSERT INTO articulos (codigo, descripcion, precio, stock, categoria_id)

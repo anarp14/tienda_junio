@@ -96,4 +96,16 @@ class Factura extends Modelo
         }
         return $res;
     }
+
+    public function getArticuloId()
+    {
+        // Recuperar el id del artículo asociado a esta factura
+        $pdo = conectar();
+        $stmt = $pdo->prepare('SELECT articulo_id FROM articulos_facturas WHERE factura_id = :factura_id');
+        $stmt->execute([':factura_id' => $this->id]);
+        return $stmt->fetchColumn();
+    }
+
+    // ...
+
 }
