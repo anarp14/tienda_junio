@@ -54,7 +54,7 @@
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                             <td class="py-4 px-6"><?= $fila['descripcion'] ?></td>
                             <td class="py-4 px-6"><?= $fila['usuario'] ?></td>
-                            <td class="py-4 px-6"><?= $fila['comentario'] ? $fila['comentario'] : '' ?></td>
+                            <td class="py-4 px-6"><?= $fila['texto'] ? $fila['texto'] : '' ?></td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>
