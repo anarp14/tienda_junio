@@ -24,7 +24,7 @@
         $sent = $pdo->prepare('SELECT *
                                  FROM articulos
                                 WHERE id IN (:ids)');
-        $sent->execute([':ids' => implode(', ', $carrito->getIds())]);
+       
         foreach ($sent->fetchAll(PDO::FETCH_ASSOC) as $fila) {
             if ($fila['stock'] < $carrito->getLinea($fila['id'])->getCantidad()) {
                 $_SESSION['error'] = 'No hay existencias suficientes para crear la factura.';
@@ -63,7 +63,6 @@
                                     WHERE id = :id');
             $sent->execute([':id' => $id, ':cantidad' => $cantidad]);
         }
-
         $pdo->commit();
         $_SESSION['exito'] = 'La factura se ha creado correctamente.';
         unset($_SESSION['carrito']);
@@ -82,7 +81,6 @@
                     <th scope="col" class="py-3 px-6">Cantidad</th>
                     <th scope="col" class="py-3 px-6">Precio</th>
                     <th scope="col" class="py-3 px-6">Importe</th>
-                    <th scope="col" class="py-3 px-6">Acciones</th>
                 </thead>
                 <tbody>
                     <?php $total = 0 ?>
@@ -105,10 +103,6 @@
                             <td class="py-4 px-6 text-center">
                                 <?= dinero($importe) ?>
                             </td>
-                            <td>
-                                <a href="/incrementar.php?id=<?= $articulo->getId() ?>" class="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900">+</a>
-                                <a href="/decrementar.php?id=<?= $articulo->getId() ?>" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">-</a>
-                            </td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>
@@ -116,17 +110,12 @@
                     <td colspan="3"></td>
                     <td class="text-center font-semibold">TOTAL:</td>
                     <td class="text-center font-semibold"><?= dinero($total) ?></td>
-
                 </tfoot>
             </table>
-            <form action=" " method="POST" class="mx-auto flex mt-4">
+            <form action="" method="POST" class="mx-auto flex mt-4">
                 <input type="hidden" name="_testigo" value="1">
-                <?php if ($carrito->getLineas()) : ?>
-                    <button type="submit" href="" class="mx-auto focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
-                <?php else : ?>
-                    <a href="index.php" class="mx-auto focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Volver al indice</a>
-                <?php endif ?>
-            </form> 
+                <button type="submit" href="" class="mx-auto focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
+            </form>
         </div>
     </div>
     <script src="/js/flowbite/flowbite.js"></script>

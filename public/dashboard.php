@@ -64,7 +64,7 @@ session_start() ?>
                                 <?php $usuario_id = $factura->getUsuarioId();
                                 $articulo_id = $factura->getArticuloId();
                                 ?>
-                                <button data-modal-toggle="insertar_comentario" href="/nuevo_producto.php" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">
+                                <button data-modal-toggle="insertar_comentario"  class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">
                                     <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-green dark:bg-gray-900 rounded-md group-hover:bg-opacity-1">
                                         Nuevo comentario
                                     </span>

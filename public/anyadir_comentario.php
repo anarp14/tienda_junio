@@ -11,23 +11,19 @@ $articulo_id = $_GET['articulo_id'];
 
 $usuario_id = $_GET['usuario_id']; // Suponiendo que ya tienes el ID del usuario en una sesión
 
-var_dump($texto);
-var_dump($articulo_id);
-var_dump($usuario_id);
-
 $pdo = conectar();
 
 // Verificar si el usuario ya ha comentado en la tabla de comentarios
-$sent = $pdo->prepare("SELECT * FROM comentarios WHERE usuario_id = :usuario_id AND articulo_id = :articulo_id");
+$sent = $pdo->prepare("SELECT * FROM comentarios_facturas WHERE usuario_id = :usuario_id AND articulo_id = :articulo_id");
 $sent->execute(['usuario_id' => $usuario_id, 'articulo_id' => $articulo_id]);
 
 if ($sent->rowCount() > 0) {
   // Si el usuario ya ha comentado, actualizar su comentario en la tabla de comentarios
-  $sent = $pdo->prepare("UPDATE comentarios SET texto = :texto WHERE usuario_id = :usuario_id AND articulo_id = :articulo_id");
+  $sent = $pdo->prepare("UPDATE comentarios_facturas SET texto = :texto WHERE usuario_id = :usuario_id AND articulo_id = :articulo_id");
   $sent->execute(['texto' => $texto, 'usuario_id' => $usuario_id, 'articulo_id' => $articulo_id]);
 } else {
   // Si el usuario no ha comentado todavía, insertar su comentario en la tabla de texto
-  $sent = $pdo->prepare("INSERT INTO comentarios (texto, usuario_id, articulo_id) VALUES (:texto, :usuario_id, :articulo_id)");
+  $sent = $pdo->prepare("INSERT INTO comentarios_facturas (texto, usuario_id, articulo_id) VALUES (:texto, :usuario_id, :articulo_id)");
   $sent->execute(['texto' => $texto, 'usuario_id' => $usuario_id, 'articulo_id' => $articulo_id]);
 }
 

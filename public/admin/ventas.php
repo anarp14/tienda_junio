@@ -31,13 +31,15 @@
 
     $pdo = conectar();
 
-    $sent = $pdo->query("SELECT DISTINCT art.*, u.usuario, val.valoracion, af.cantidad, com.texto
+    $sent = $pdo->query("SELECT DISTINCT art.*, u.usuario, val.valoracion, af.cantidad, com.comentario
     FROM articulos art
     JOIN articulos_facturas af ON (art.id = af.articulo_id)
     JOIN facturas f ON (f.id = af.factura_id)
     JOIN usuarios u ON (f.usuario_id = u.id)
     LEFT JOIN valoraciones val ON (val.usuario_id = u.id AND val.articulo_id = art.id)
-    LEFT JOIN comentarios com ON (com.usuario_id = u.id AND com.articulo_id = art.id);
+    /*LEFT JOIN comentarios com ON (com.usuario_id = u.id AND com.articulo_id = art.id)         NO FUNCIONA*/
+    
+    
     ");
 
     ?>
@@ -68,7 +70,7 @@
                             <td class="py-4 px-6"><?= $fila['cantidad'] * $fila['precio']  ?> </td>
                             <td class="py-4 px-6"><?= $fila['usuario'] ?></td>
                             <td class="py-4 px-6"><?= $fila['valoracion'] ? $fila['valoracion'] : '' ?></td>
-                            <td class="py-4 px-6"><?= $fila['texto'] ? $fila['texto'] : '' ?></td>
+                            <td class="py-4 px-6"><?= $fila['comentario'] ? $fila['comentario'] : '' ?></td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>

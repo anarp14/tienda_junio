@@ -24,7 +24,7 @@
 
     $pdo = conectar();
 
-    $sent = $pdo->prepare("SELECT art.*, usuarios.usuario, com.texto FROM
+    $sent = $pdo->prepare("SELECT art.*, usuarios.usuario, com.comentario FROM
              articulos art LEFT JOIN comentarios com ON (art.id = com.articulo_id) JOIN usuarios ON (usuarios.id = com.usuario_id)
             WHERE usuarios.usuario = :usuario ");
 
@@ -54,7 +54,7 @@
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                             <td class="py-4 px-6"><?= $fila['descripcion'] ?></td>
                             <td class="py-4 px-6"><?= $fila['usuario'] ?></td>
-                            <td class="py-4 px-6"><?= $fila['texto'] ? $fila['texto'] : '' ?></td>
+                            <td class="py-4 px-6"><?= $fila['comentario'] ? $fila['comentario'] : '' ?></td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>

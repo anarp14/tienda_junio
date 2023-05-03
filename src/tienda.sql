@@ -38,6 +38,14 @@ CREATE TABLE valoraciones (
     PRIMARY KEY (articulo_id, usuario_id)
 );
 
+DROP TABLE IF EXISTS comentarios CASCADE;
+CREATE TABLE comentarios (
+    articulo_id bigint  NOT NULL REFERENCES  articulos   (id),
+    usuario_id  bigint  NOT NULL REFERENCES  usuarios    (id),
+    comentario  varchar(255),
+    PRIMARY KEY (articulo_id, usuario_id)
+);
+
 
 DROP TABLE IF EXISTS usuarios CASCADE;
 CREATE TABLE usuarios (
@@ -62,8 +70,8 @@ CREATE TABLE articulos_facturas (
     PRIMARY KEY (articulo_id, factura_id)
 );
 
-DROP TABLE IF EXISTS comentarios CASCADE;
-CREATE TABLE comentarios (
+DROP TABLE IF EXISTS comentarios_facturas CASCADE;
+CREATE TABLE comentarios_facturas (
     fecha_creacion timestamp  NOT NULL DEFAULT localtimestamp(0),
     texto       varchar(255),
     usuario_id bigint NOT NULL REFERENCES usuarios (id),
