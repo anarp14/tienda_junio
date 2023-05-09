@@ -40,6 +40,7 @@ session_start() ?>
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <th scope="col" class="py-3 px-6">Fecha</th>
                     <th scope="col" class="py-3 px-6">Total</th>
+                    <th scope="col" class="py-3 px-6">Método de pago</th>
                     <th scope="col" class="py-3 px-6 text-center">Acciones</th>
                 </thead>
                 <tbody>
@@ -57,6 +58,9 @@ session_start() ?>
                             <td class="py-4 px-6">
                                 <?= hh(dinero($factura->getTotal())) ?>
                             </td>
+                            <td>
+                                <?= hh($factura->getMetodo_pago()) ?>
+                            </td>
                             <td class="px-6 text-center">
                                 <a href="/factura_pdf.php?id=<?= $factura->id ?>" target="_blank">
                                     <button class="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900">PDF</button>
@@ -66,7 +70,7 @@ session_start() ?>
                                 ?>
                                 <button data-modal-toggle="insertar_comentario"  class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">
                                     <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-green dark:bg-gray-900 rounded-md group-hover:bg-opacity-1">
-                                        Nuevo comentario
+                                        Valorar compra
                                     </span>
                                 </button>
                             </td>

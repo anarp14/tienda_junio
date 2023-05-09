@@ -24,7 +24,7 @@
         $sent = $pdo->prepare('SELECT *
                                  FROM articulos
                                 WHERE id IN (:ids)');
-       
+
         foreach ($sent->fetchAll(PDO::FETCH_ASSOC) as $fila) {
             if ($fila['stock'] < $carrito->getLinea($fila['id'])->getCantidad()) {
                 $_SESSION['error'] = 'No hay existencias suficientes para crear la factura.';
@@ -34,11 +34,12 @@
         // Crear factura
         $usuario = \App\Tablas\Usuario::logueado();
         $usuario_id = $usuario->id;
+        $metodo_pago = obtener_post('metodo_pago');
         $pdo->beginTransaction();
-        $sent = $pdo->prepare('INSERT INTO facturas (usuario_id)
-                               VALUES (:usuario_id)
+        $sent = $pdo->prepare('INSERT INTO facturas (usuario_id, metodo_pago)
+                               VALUES (:usuario_id, :metodo_pago)
                                RETURNING id');
-        $sent->execute([':usuario_id' => $usuario_id]);
+        $sent->execute([':usuario_id' => $usuario_id, ':metodo_pago' => $metodo_pago]);
         $factura_id = $sent->fetchColumn();
         $lineas = $carrito->getLineas();
         $values = [];
@@ -81,6 +82,7 @@
                     <th scope="col" class="py-3 px-6">Cantidad</th>
                     <th scope="col" class="py-3 px-6">Precio</th>
                     <th scope="col" class="py-3 px-6">Importe</th>
+                    <th scope="col" class="py-3 px-6">Método de pago</th>
                 </thead>
                 <tbody>
                     <?php $total = 0 ?>
@@ -103,6 +105,17 @@
                             <td class="py-4 px-6 text-center">
                                 <?= dinero($importe) ?>
                             </td>
+
+                            <td>
+                                <?php $metodo_pago = isset($_POST['metodo_pago']) ? $_POST['metodo_pago'] : ''; ?>
+                                <form action="" method="POST" class="mx-auto flex mt-4">
+                                    <input type="hidden" name="_testigo" value="1">
+                                    <select name="metodo_pago" id="metodo_pago" class="border text-sm rounded-lg w-full p-2.5">
+                                        <option value="Tarjeta de crédito" <?= ($metodo_pago == "tarjeta") ? 'selected' : '' ?>>Tarjeta de crédito</option>
+                                        <option value="Paypal" <?= ($metodo_pago == "paypal") ? 'selected' : '' ?>>PayPal</option>
+                                        <option value="Transferencia bancaria" <?= ($metodo_pago == "transferencia") ? 'selected' : '' ?>>Transferencia bancaria</option>
+                                    </select>
+                            </td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>
@@ -112,9 +125,11 @@
                     <td class="text-center font-semibold"><?= dinero($total) ?></td>
                 </tfoot>
             </table>
-            <form action="" method="POST" class="mx-auto flex mt-4">
-                <input type="hidden" name="_testigo" value="1">
-                <button type="submit" href="" class="mx-auto focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
+            <tr>
+                <td class="text-center ">
+                <button type="submit" href="" class="mx-auto flex mt-4  focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
+                </td>
+            </tr>
             </form>
         </div>
     </div>

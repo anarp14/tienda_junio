@@ -59,7 +59,8 @@ DROP TABLE IF EXISTS facturas CASCADE;
 CREATE TABLE facturas (
     id         bigserial  PRIMARY KEY,
     created_at timestamp  NOT NULL DEFAULT localtimestamp(0),
-    usuario_id bigint NOT NULL REFERENCES usuarios (id)
+    usuario_id bigint NOT NULL REFERENCES usuarios (id),
+    metodo_pago   varchar(50) NOT NULL
 );
 
 DROP TABLE IF EXISTS articulos_facturas CASCADE;
@@ -78,6 +79,7 @@ CREATE TABLE comentarios_facturas (
     articulo_id bigint NOT NULL REFERENCES articulos(id),
     PRIMARY KEY (articulo_id, usuario_id)
 );
+
 
 -- Carga inicial de datos de prueba:
 

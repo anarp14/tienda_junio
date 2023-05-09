@@ -11,6 +11,7 @@ class Factura extends Modelo
     public $id;
     public $created_at;
     public $usuario_id;
+    public $metodo_pago;
     private $total;
 
     public function __construct(array $campos)
@@ -18,6 +19,7 @@ class Factura extends Modelo
         $this->id = $campos['id'];
         $this->created_at = $campos['created_at'];
         $this->usuario_id = $campos['usuario_id'];
+        $this->metodo_pago = $campos['metodo_pago'];
         $this->total = isset($campos['total']) ? $campos['total'] : null;
     }
 
@@ -34,6 +36,11 @@ class Factura extends Modelo
     public function getUsuarioId()
     {
         return $this->usuario_id;
+    }
+
+        public function getMetodo_pago()
+    {
+        return $this->metodo_pago;
     }
 
     public function getTotal(?PDO $pdo = null)

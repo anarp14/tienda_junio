@@ -37,10 +37,9 @@
     JOIN facturas f ON (f.id = af.factura_id)
     JOIN usuarios u ON (f.usuario_id = u.id)
     LEFT JOIN valoraciones val ON (val.usuario_id = u.id AND val.articulo_id = art.id)
-    /*LEFT JOIN comentarios com ON (com.usuario_id = u.id AND com.articulo_id = art.id)         NO FUNCIONA*/
-    
-    
+    LEFT JOIN comentarios com ON (com.usuario_id = u.id AND com.articulo_id = art.id)     
     ");
+    /* NO FUNCIONA */
 
     ?>
 

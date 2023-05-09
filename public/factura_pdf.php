@@ -30,6 +30,8 @@ if ($factura->getUsuarioId() != $usuario->id) {
 $filas_tabla = '';
 $total = 0;
 
+$metodo_pago = $factura->getMetodo_pago();
+
 foreach ($factura->getLineas($pdo) as $linea) {
     $articulo = $linea->getArticulo();
     $codigo = $articulo->getCodigo();
@@ -44,6 +46,7 @@ foreach ($factura->getLineas($pdo) as $linea) {
     $filas_tabla .= <<<EOF
         <tr>
             <td>$codigo</td>
+            <td>$metodo_pago </td>
             <td>$descripcion</td>
             <td>$cantidad</td>
             <td>$precio</td>
@@ -60,6 +63,7 @@ $res = <<<EOT
 <table border="1" class="font-sans mx-auto">
     <tr>
         <th>Código</th>
+        <th>Método de pago</th>
         <th>Descripción</th>
         <th>Cantidad</th>
         <th>Precio</th>
