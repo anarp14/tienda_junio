@@ -1,20 +1,12 @@
 <?php
 session_start();
 require '../vendor/autoload.php';
-// Obtener los datos del formulario de votación
-$comentario = ''; // inicializar la variable $comentario
 
-if(isset($_POST['comentario'])) {
-  $comentario = $_POST['comentario'];
-}
+$comentario = obtener_post('comentario');
 
-$articulo_id = $_GET['articulo_id'];
+$articulo_id = obtener_post('articulo_id');
 
-$usuario_id = $_GET['usuario_id']; // Suponiendo que ya tienes el ID del usuario en una sesión
-
-var_dump($comentario);
-var_dump($articulo_id);
-var_dump($usuario_id);
+$usuario_id = obtener_post('usuario_id'); // Suponiendo que ya tienes el ID del usuario en una sesión
 
 $pdo = conectar();
 

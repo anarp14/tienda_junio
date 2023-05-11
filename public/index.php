@@ -8,6 +8,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="/css/output.css" rel="stylesheet">
     <title>Portal</title>
+    <script>
+    function cambiar(el, articulo_id, usuario_id) {
+        el.preventDefault();
+        const oculto_art = document.getElementById('ocultoId');
+        oculto_art.setAttribute('value', articulo_id);
+        const oculto_usuario = document.getElementById('ocultoIdUsuario');
+        oculto_usuario.setAttribute('value', usuario_id);
+    }
+</script>
+
 </head>
 
 <body>
@@ -112,7 +122,6 @@
     $where $where_sin_valoracion
     GROUP BY articulos.id, c.categoria, c.id $condicion3
     $having  $having_mas_valoraciones 
-    
        ");
 
     $sent->execute($execute);
@@ -233,12 +242,12 @@
                                 </label>
                             </div>
                         </div>
-                        <button data-modal-toggle="insertar_comentario" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">
-                            <?php $articulo_id =  $fila['id'] ; ?>
-                            <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-green dark:bg-gray-900 rounded-md group-hover:bg-opacity-1">
-                                Comentar
-                            </span>
-                        </button>
+
+                        <form action="comentar_articulo.php" method="POST" class="inline">
+                            <input type="hidden" name="articulo_id" value="<?= $fila['id'] ?>">
+                            <input  type="hidden" name="usuario_id"  value="<?= $usuario_id ?>">
+                            <button type="submit" onclick="cambiar(event, <?= $fila['id']?>, <?= $usuario_id ?>)" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900" data-modal-toggle="insertar_comentario">Comentar</button>
+                        </form>
                     </div>
                 <?php endforeach ?>
             </main>
@@ -288,15 +297,20 @@
                     <span class="sr-only">Cerrar ventana</span>
                 </button>
                 <div class="p-6 text-center">
-                    <form action="/comentar_articulo.php?articulo_id=<?= $articulo_id?>&usuario_id=<?= $usuario_id ?>" method="POST">
+                    <form action="/comentar_articulo.php" method="POST">
                         <div class="mb-6">
                             <label for="comentario" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                 Comentario
+                                <textarea name="comentario" id="comentario" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600  dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required rows="5"></textarea>
                             </label>
-                            <textarea name="comentario" id="comentario" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600  dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required rows="5"></textarea>
+                            <input id="ocultoId" type="hidden" name="articulo_id">
+                            <input id="ocultoIdUsuario" type="hidden" name="usuario_id">
                         </div>
-                        <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        <button data-modal-toggle="insertar_comentario" type="submit" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2">
                             Enviar
+                        </button>
+                        <button data-modal-toggle="insertar_comentario" type="button" class="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600">
+                            No, cancelar
                         </button>
                     </form>
                 </div>

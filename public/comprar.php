@@ -106,7 +106,7 @@
                                 <?= dinero($importe) ?>
                             </td>
 
-                            <td>
+                            <td class="py-4 px-6 text-center">
                                 <?php $metodo_pago = isset($_POST['metodo_pago']) ? $_POST['metodo_pago'] : ''; ?>
                                 <form action="" method="POST" class="mx-auto flex mt-4">
                                     <input type="hidden" name="_testigo" value="1">
