@@ -115,4 +115,44 @@ class Factura extends Modelo
 
     // ...
 
+    public function getArticulosComprados(): array
+{
+    $pdo = conectar();
+
+    $sent = $pdo->prepare('
+        SELECT DISTINCT art.*, af.cantidad
+        FROM articulos art
+        JOIN articulos_facturas af ON (art.id = af.articulo_id)
+        JOIN facturas f ON (f.id = af.factura_id)
+        WHERE f.id = :factura_id
+    ');
+    
+    $sent->execute([':factura_id' => $this->id]);
+    $articulos = $sent->fetchAll(PDO::FETCH_ASSOC);
+
+    return $articulos;
+}
+
+
+public function seHaComprado(int $articuloId): bool
+{
+    $articulosComprados = $this->getArticulosComprados();
+
+    foreach ($articulosComprados as $articuloComprado) {
+        if ($articuloComprado['id'] === $articuloId) {
+            return true; // El artículo se ha comprado
+        }
+    }
+
+    return false; // El artículo no se ha comprado
+}
+
+
+
+    
+
+
+    
+
+
 }

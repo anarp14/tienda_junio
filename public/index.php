@@ -9,14 +9,14 @@
     <link href="/css/output.css" rel="stylesheet">
     <title>Portal</title>
     <script>
-    function cambiar(el, articulo_id, usuario_id) {
-        el.preventDefault();
-        const oculto_art = document.getElementById('ocultoId');
-        oculto_art.setAttribute('value', articulo_id);
-        const oculto_usuario = document.getElementById('ocultoIdUsuario');
-        oculto_usuario.setAttribute('value', usuario_id);
-    }
-</script>
+        function cambiar(el, articulo_id, usuario_id) {
+            el.preventDefault();
+            const oculto_art = document.getElementById('ocultoId');
+            oculto_art.setAttribute('value', articulo_id);
+            const oculto_usuario = document.getElementById('ocultoIdUsuario');
+            oculto_usuario.setAttribute('value', usuario_id);
+        }
+    </script>
 
 </head>
 
@@ -24,13 +24,16 @@
     <?php
     require '../vendor/autoload.php';
 
+    use \App\Tablas\Factura;
+    use App\Tablas\Usuario;
+
+
     $carrito = unserialize(carrito());
     $categoria = obtener_get('categoria');
     $etiquetas = obtener_get('etiqueta');
     $valoracion = obtener_get('valoracion');
     $precio_min = obtener_get('precio_min');
     $precio_max = obtener_get('precio_max');
-
 
     $where = '';
     $having = '';
@@ -117,12 +120,14 @@
     $sent = $pdo->prepare("SELECT articulos.*, c.categoria, c.id as catid $cond $cond2 
     FROM articulos
     JOIN categorias c ON (articulos.categoria_id = c.id) 
-    LEFT JOIN articulos_etiquetas ae ON (articulos.id = ae.articulo_id)
-    LEFT JOIN etiquetas e ON (ae.etiqueta_id = e.id)
+    JOIN articulos_etiquetas ae ON (articulos.id = ae.articulo_id)
+    JOIN etiquetas e ON (ae.etiqueta_id = e.id)
+    $condicion $condicion2
     $where $where_sin_valoracion
     GROUP BY articulos.id, c.categoria, c.id $condicion3
     $having  $having_mas_valoraciones 
-       ");
+    ");
+
 
     $sent->execute($execute);
 
@@ -199,55 +204,78 @@
                             </a>
                         <?php endif ?>
                         <div class="flex mb-3 font-normal text-gray-700 dark:text-gray-400">
-                            <form action="valorar_articulo.php" method="GET">
-                                <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
-                                    Valoración:
-                                    <?php
-                                    $usuario = \App\Tablas\Usuario::logueado();
-                                    $usuario_id = $usuario ? $usuario->id : null;
+                            <?php
+                            $usuario = \App\Tablas\Usuario::logueado();
+                            $usuario_id = $usuario ? $usuario->id : null;
 
-                                    $sent3 = $pdo->prepare("SELECT *
+                            if ($usuario) {
+                                $facturas = Factura::todosConTotal(
+                                    ['usuario_id = :usuario_id'],
+                                    [':usuario_id' => $usuario_id]
+                                );
+                            } else {
+                                $facturas = []; // Si el usuario no está logeado, inicializa el array de facturas vacío
+                            }
+                            ?>
+                            <?php foreach ($facturas as $factura) : ?>
+                                <?php
+                                $articuloId = $fila['id']; // Obtén el ID del artículo actual
+
+                                // Verifica si el artículo está comprado utilizando el método seHaComprado
+                                $estaComprado = $factura->seHaComprado($articuloId);
+                                ?>
+                                <form action="valorar_articulo.php" method="GET">
+                                    <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
+                                        Valoración:
+                                        <?php
+                                        $sent3 = $pdo->prepare("SELECT *
                                                         FROM valoraciones
                                                         WHERE usuario_id = :usuario_id AND articulo_id = :articulo_id");
-                                    $sent3->execute(['usuario_id' => $usuario_id, 'articulo_id' => $fila['id']]);
-                                    $valoracion_usuario = $sent3->fetch(PDO::FETCH_ASSOC);
-                                    ?>
-                                    <select name="valoracion" id="valoracion">
-                                        <option value="" <?= (!$usuario_id) ? 'selected' : '' ?>></option>
-                                        <?php for ($i = 1; $i <= 5; $i++) : ?>
-                                            <option value="<?= $i ?>" <?= ($valoracion_usuario && $valoracion_usuario['valoracion'] == $i) ? 'selected' : '' ?>><?= $i ?></option>
-                                        <?php endfor ?>
-                                    </select>
-                                </label>
-                                <input type="hidden" name="articulo_id" value="<?= $fila['id'] ?>">
-                                <input type="hidden" name="usuario_id" value="<?= $usuario_id ?>">
+                                        $sent3->execute(['usuario_id' => $usuario_id, 'articulo_id' => $fila['id']]);
+                                        $valoracion_usuario = $sent3->fetch(PDO::FETCH_ASSOC);
+                                        ?>
+                                        <select name="valoracion" id="valoracion">
+                                            <option value="" <?= (!$usuario_id) ? 'selected' : '' ?>></option>
+                                            <?php for ($i = 1; $i <= 5; $i++) : ?>
+                                                <option value="<?= $i ?>" <?= ($valoracion_usuario && $valoracion_usuario['valoracion'] == $i) ? 'selected' : '' ?>><?= $i ?></option>
+                                            <?php endfor ?>
+                                        </select>
+                                    </label>
+                                    <input type="hidden" name="articulo_id" value="<?= $fila['id'] ?>">
+                                    <input type="hidden" name="usuario_id" value="<?= $usuario_id ?>">
 
-                                <?php if (!\App\Tablas\Usuario::esta_logueado()) : ?>
-                                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" disabled>Votar</button>
-                                <?php else : ?>
-                                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Votar</button>
-                                <?php endif ?>
-                            </form>
-                            <div>
-                                <label class="block text-m font-medium pl-3 ml-3">
-                                    Valoración media:
-                                    <?php
-                                    $sent4 = $pdo->prepare("SELECT avg(valoracion)::numeric(10,2)
+                                    <?php if (!(\App\Tablas\Usuario::esta_logueado() && $estaComprado)) : ?>
+                                        <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" disabled>Votar</button>
+                                    <?php else : ?>
+                                        <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Votar</button>
+                                    <?php endif ?>
+                                </form>
+                                <div>
+                                    <label class="block text-m font-medium pl-3 ml-3">
+                                        Valoración media:
+                                        <?php
+                                        $sent4 = $pdo->prepare("SELECT avg(valoracion)::numeric(10,2)
                                                         FROM valoraciones
                                                         WHERE articulo_id = :articulo_id");
-                                    $sent4->execute(['articulo_id' => $fila['id']]);
-                                    $valoracionMedia = $sent4->fetchColumn();
-                                    ?>
-                                    <p class="mb-3 pl-3 font-normal text-gray-700 dark:text-gray-400"><?= hh($valoracionMedia) ?></p>
-                                </label>
-                            </div>
+                                        $sent4->execute(['articulo_id' => $fila['id']]);
+                                        $valoracionMedia = $sent4->fetchColumn();
+                                        ?>
+                                        <p class="mb-3 pl-3 font-normal text-gray-700 dark:text-gray-400"><?= hh($valoracionMedia) ?></p>
+                                    </label>
+                                </div>
                         </div>
 
                         <form action="comentar_articulo.php" method="POST" class="inline">
                             <input type="hidden" name="articulo_id" value="<?= $fila['id'] ?>">
-                            <input  type="hidden" name="usuario_id"  value="<?= $usuario_id ?>">
-                            <button type="submit" onclick="cambiar(event, <?= $fila['id']?>, <?= $usuario_id ?>)" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900" data-modal-toggle="insertar_comentario">Comentar</button>
+                            <input type="hidden" name="usuario_id" value="<?= $usuario_id ?>">
+                            <?php $estaComprado = $factura->seHaComprado($articuloId); ?>
+                            <?php if (!(\App\Tablas\Usuario::esta_logueado() && $estaComprado)) : ?>
+                                <button type="submit" onclick="cambiar(event, <?= $fila['id'] ?>, <?= $usuario_id ?>)" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900" disabled data-modal-toggle="insertar_comentario">Comentar</button>
+                            <?php else : ?>
+                                <button type="submit" onclick="cambiar(event, <?= $fila['id'] ?>, <?= $usuario_id ?>)" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 mr-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900" data-modal-toggle="insertar_comentario">Comentar</button>
+                            <?php endif ?>
                         </form>
+                    <?php endforeach ?>
                     </div>
                 <?php endforeach ?>
             </main>

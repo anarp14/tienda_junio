@@ -123,4 +123,5 @@ INSERT INTO articulos_etiquetas (articulo_id, etiqueta_id)
             (4, 7),
             (4, 1),
             (5, 3),
-            (5, 8);
+            (5, 8),
+            (6, 8);
