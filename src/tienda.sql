@@ -8,7 +8,8 @@ CREATE TABLE articulos (
     descripcion varchar(255)  NOT NULL,
     precio      numeric(7, 2) NOT NULL,
     stock       int           NOT NULL,
-    categoria_id bigint       NOT NULL REFERENCES categorias (id)
+    categoria_id bigint       NOT NULL REFERENCES categorias (id),
+    cupon_id    bigint       REFERENCES cupones(id)
 );
 
 DROP TABLE IF EXISTS categorias CASCADE;
@@ -80,16 +81,24 @@ CREATE TABLE comentarios_facturas (
     PRIMARY KEY (articulo_id, usuario_id)
 );
 
+DROP TABLE IF EXISTS cupones CASCADE;
+CREATE TABLE cupones (
+    id      bigserial  PRIMARY KEY,
+    fecha_inicio      date NOT NULL,
+    fecha_fin       date NOT NULL,
+    cupon       varchar (25)
+);
+
 
 -- Carga inicial de datos de prueba:
 
-INSERT INTO articulos (codigo, descripcion, precio, stock, categoria_id)
-    VALUES ('18273892389', 'Yogur piña', 2.50, 20, 2),
-           ('83745828273', 'Tigretón', 1.10, 30, 2),
-           ('51736128495', 'Disco duro SSD 500 GB', 150.30, 15, 1),
-           ('51786128435', 'Disco duro M2 500 GB', 180.30, 0, 1),
-           ('83745228673', 'Chandal', 30.10, 15, 3),
-           ('51786198495', 'Traje', 250.30, 1, 3);
+INSERT INTO articulos (codigo, descripcion, precio, stock, categoria_id, cupon_id)
+    VALUES ('18273892389', 'Yogur piña', 2.50, 20, 2, NULL),
+           ('83745828273', 'Tigretón', 1.10, 30, 2, NULL),
+           ('51736128495', 'Disco duro SSD 500 GB', 150.30, 15, 1, NULL),
+           ('51786128435', 'Disco duro M2 500 GB', 180.30, 0, 1, NULL),
+           ('83745228673', 'Chandal', 30.10, 15, 3, 1),
+           ('51786198495', 'Traje', 250.30, 1, 3,1);
 
 INSERT INTO usuarios (usuario, password, validado)
     VALUES ('admin', crypt('admin', gen_salt('bf', 10)), true),
@@ -125,3 +134,5 @@ INSERT INTO articulos_etiquetas (articulo_id, etiqueta_id)
             (5, 3),
             (5, 8),
             (6, 8);
+
+INSERT INTO cupones (fecha_inicio, fecha_fin, cupon) VALUES ('2023-05-16', '2023-12-31', 'DESCUENTO10');

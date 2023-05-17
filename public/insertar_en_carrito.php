@@ -23,10 +23,6 @@ try {
         volver();
     }
 
-    if ($articulo->getStock() <= 0) {
-        $_SESSION['error'] = 'No hay existencias suficientes.';
-        volver();
-    }
 
     $carrito = unserialize(carrito());
 
@@ -46,6 +42,8 @@ try {
     
     if ($stock > $cantidad) {
         $carrito->insertar($id);
+    } else {
+        $_SESSION['error'] = 'No hay existencias suficientes.';
     }
     
     

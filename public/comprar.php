@@ -18,6 +18,7 @@
     }
 
     $carrito = unserialize(carrito());
+    $cupon = obtener_get('cupon');
 
     if (obtener_post('_testigo') !== null) {
         $pdo = conectar();
@@ -83,6 +84,8 @@
                     <th scope="col" class="py-3 px-6">Precio</th>
                     <th scope="col" class="py-3 px-6">Importe</th>
                     <th scope="col" class="py-3 px-6">Método de pago</th>
+                    <th scope="col" class="py-3 px-6">Acciones</th>
+                    <th scope="col" class="py-3 px-6">¿Tienes un cupón de descuento?</th>
                 </thead>
                 <tbody>
                     <?php $total = 0 ?>
@@ -116,6 +119,19 @@
                                         <option value="Transferencia bancaria" <?= ($metodo_pago == "transferencia") ? 'selected' : '' ?>>Transferencia bancaria</option>
                                     </select>
                             </td>
+                            <td>
+                                <a href="/incrementar.php?id=<?= $articulo->getId() ?>" class="inline-flex items-center py-2 px-3.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">+</a>
+                                <a href="/decrementar.php?id=<?= $articulo->getId() ?>" class="inline-flex items-center py-2 px-3.5 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring--800">-</a>
+                            </td>
+                            <td>
+                            <form action="" method="GET">
+                            <div class="flex mb-3 font-normal text-gray-700 dark:text-gray-400">
+                            <input type="text" name="cupon" value="<?= isset($cupon) ? $cupon : '' ?>" class="border text-sm rounded-lg w-full p-2.5">
+                            </div>
+                            <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Comprobar</button>
+
+                            </form>
+                            </td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>
@@ -127,7 +143,7 @@
             </table>
             <tr>
                 <td class="text-center ">
-                <button type="submit" href="" class="mx-auto flex mt-4  focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
+                    <button type="submit" href="" class="mx-auto flex mt-4  focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
                 </td>
             </tr>
             </form>

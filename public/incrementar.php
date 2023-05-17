@@ -14,6 +14,13 @@ $articulo = Articulo::obtener($id);
 
 $articulo == null ?: volver();
 
+$cant = empty($lineas[$id]) ? 0 : $lineas[$id]->getCantidad();
+ 
+if( $stock <= $cant){
+    $_SESSION['error'] = 'No hay existencias suficientes.';
+    return volver_comprar();
+}
+
 $carrito = unserialize(carrito());
 
 $carrito->insertar($id);

@@ -61,6 +61,11 @@ function volver_categoria()
     header("Location: /admin/categorias.php");
 }
 
+function volver_comprar()
+{
+    header("Location: /comprar.php");
+}
+
 function redirigir_login()
 {
     header('Location: /login.php');
