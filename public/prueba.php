@@ -163,23 +163,21 @@
                             </td>
                         </tr>
                     <?php endforeach ?>
-                    <!-- Formulario para aplicar cupón de descuento -->
                     <div>
-                        <h2>¿Tienes algún cupón de descuento?:</h2>
-                        <form action="" method="GET" class="mx-auto flex mt-4">
-                            <label>
-                                <input type="text" name="cupon" value="<?= $cupon ?>" class="border text-sm rounded-lg p-2.5">
-                                <button type="submit" class="mx-auto focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Aplicar cupon</button>
-                                <?php foreach ($errores['cupon'] as $err) : ?>
-                                    <p class="mt-2 text-sm text-red-600 dark:text-red-500"><span class="font-bold">¡Error!</span> <?= $err ?></p>
-                                <?php endforeach ?>
-                            </label>
-                        </form>
-                    </div>
-
-                    <!-- Formulario para seleccionar método de pago -->
-
+                    <h2> ¿Tienes algún cupón de descuento?: </h2>
+                    <form action="" method="GET" class="mx-auto flex mt-4">
+                        <label>
+                            <input type="text" name="cupon" value="<?= $cupon ?>" class="border text-sm rounded-lg p-2.5">
+                            <button type="submit" class="mx-auto focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Aplicar cupon</button>
+                            <?php foreach ($errores['cupon'] as $err) : ?>
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-500"><span class="font-bold">¡Error!</span> <?= $err ?></p>
+                            <?php endforeach ?>
+                        </label>
+                    </form>
+                    </div> <br>
+                    <div>
                     <h2>Método de pago:</h2>
+
                     <?php $metodo_pago = isset($_POST['metodo_pago']) ? $_POST['metodo_pago'] : ''; ?>
                     <form action="" method="POST" class="mx-auto flex mt-4">
                         <input type="hidden" name="_testigo" value="1">
@@ -188,6 +186,8 @@
                             <option value="Paypal" <?= ($metodo_pago == "paypal") ? 'selected' : '' ?>>PayPal</option>
                             <option value="Transferencia bancaria" <?= ($metodo_pago == "transferencia") ? 'selected' : '' ?>>Transferencia bancaria</option>
                         </select>
+                    </form>
+                    </div>
                 </tbody>
                 <tfoot>
                     <td colspan="3"></td>
@@ -207,6 +207,7 @@
                     <?php } ?>
                 </tfoot>
             </table>
+            <form action="" method="POST" class="mx-auto flex mt-4">
                 <input type="hidden" name="_testigo" value="1">
                 <button type="submit" href="" class="mx-auto focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
             </form>

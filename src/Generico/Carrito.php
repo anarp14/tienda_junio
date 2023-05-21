@@ -21,7 +21,14 @@ class Carrito extends Modelo
         }
 
         if (isset($this->lineas[$id])) {
-            $this->lineas[$id]->incrCantidad();
+            $cant = $this->lineas[$id]->getCantidad();
+            if ($articulo->getStock() <= $cant) {
+                $_SESSION['error'] = 'No hay existencias suficientes.';
+                return volver_comprar();
+            } else{
+                $this->lineas[$id]->incrCantidad();
+            }
+            
         } else {
             $this->lineas[$id] = new Linea($articulo);
         }
