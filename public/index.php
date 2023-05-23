@@ -234,7 +234,7 @@
                                             $sent3->execute(['usuario_id' => $usuario_id, 'articulo_id' => $fila['id']]);
                                             $valoracion_usuario = $sent3->fetch(PDO::FETCH_ASSOC);
                                             ?>
-                                            <select name="valoracion" id="valoracion">
+                                            <select name="valoracion" id="valoracion" class="border text-sm rounded-lg ">
                                                 <option value="" <?= (!$usuario_id) ? 'selected' : '' ?>></option>
                                                 <?php for ($i = 1; $i <= 5; $i++) : ?>
                                                     <option value="<?= $i ?>" <?= ($valoracion_usuario && $valoracion_usuario['valoracion'] == $i) ? 'selected' : '' ?>><?= $i ?></option>
