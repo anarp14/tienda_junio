@@ -89,6 +89,8 @@ public function haCompradoArticulo($articuloId): bool
     $sent->execute([':usuario_id' => $this->id, ':articulo_id' => $articuloId]);
     $count = $sent->fetchColumn();
 
+    //Si el número de filas ($count) es > que 0, significa que el usuario ha comprado el artículo y devuelve true
+
     if ($count > 0){
         return true;
     }
