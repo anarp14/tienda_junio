@@ -71,4 +71,28 @@ class Usuario extends Modelo
             ':password' => password_hash($password, PASSWORD_DEFAULT),
         ]);
     }
+
+    // En la clase Usuario
+
+public function haCompradoArticulo($articuloId): bool
+{
+    $pdo = conectar();
+
+    $sent = $pdo->prepare('
+        SELECT COUNT(*) 
+        FROM facturas 
+        JOIN articulos_facturas ON (facturas.id = articulos_facturas.factura_id) 
+        WHERE facturas.usuario_id = :usuario_id 
+        AND articulos_facturas.articulo_id = :articulo_id
+    ');
+
+    $sent->execute([':usuario_id' => $this->id, ':articulo_id' => $articuloId]);
+    $count = $sent->fetchColumn();
+
+    if ($count > 0){
+        return true;
+    }
+    return false;
+}
+
 }

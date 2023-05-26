@@ -22,10 +22,11 @@ $carrito->insertar($id);
 
 $_SESSION['carrito'] = serialize($carrito);
 
-if($cupon !== null) {
-    
-    $url .= '&cupon=' . hh($cupon);
+$params = "";
+if ($cupon !== null) {
+    $params .= '&cupon=' . hh($cupon);
 }
-
 // Redirige de vuelta a comprar
-header('Location: comprar.php');
+header("Location: /comprar.php?$params");
+
+
