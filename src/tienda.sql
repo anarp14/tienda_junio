@@ -8,13 +8,23 @@ CREATE TABLE articulos (
     descripcion varchar(255)  NOT NULL,
     precio      numeric(7, 2) NOT NULL,
     stock       int           NOT NULL,
-    categoria_id bigint       NOT NULL REFERENCES categorias (id)
+    categoria_id bigint       NOT NULL REFERENCES categorias (id),
+    oferta_id   bigint       REFERENCES ofertas (id)
 );
 
 DROP TABLE IF EXISTS categorias CASCADE;
 CREATE TABLE categorias (
     id          bigserial PRIMARY KEY,
     categoria   varchar(255) UNIQUE NOT NULL
+);
+
+DROP TABLE IF EXISTS ofertas CASCADE;
+CREATE TABLE ofertas (
+    id              bigserial PRIMARY KEY,
+    fecha_inicio    date    NOT NULL,
+    fecha_fin       date    NOT NULL,
+    descuento       DECIMAL(10,2)  NOT NULL,
+    tipo_descuento  varchar(50) NOT NULL
 );
 
 DROP TABLE IF EXISTS etiquetas CASCADE;
@@ -91,15 +101,16 @@ CREATE TABLE cupones (
 );
 
 
+
 -- Carga inicial de datos de prueba:
 
-INSERT INTO articulos (codigo, descripcion, precio, stock, categoria_id)
-    VALUES ('18273892389', 'Yogur piña', 2.50, 20, 2),
-           ('83745828273', 'Tigretón', 1.10, 30, 2),
-           ('51736128495', 'Disco duro SSD 500 GB', 150.30, 15, 1),
-           ('51786128435', 'Disco duro M2 500 GB', 180.30, 0, 1),
-           ('83745228673', 'Chandal', 30.10, 15, 3),
-           ('51786198495', 'Traje', 250.30, 1, 3);
+INSERT INTO articulos (codigo, descripcion, precio, stock, categoria_id, oferta_id)
+    VALUES ('18273892389', 'Yogur piña', 2.50, 20, 2, null),
+           ('83745828273', 'Tigretón', 1.10, 30, 2, null),
+           ('51736128495', 'Disco duro SSD 500 GB', 150.30, 15, 1, null),
+           ('51786128435', 'Disco duro M2 500 GB', 180.30, 0, 1, null),
+           ('83745228673', 'Chandal', 30.10, 15, 3,1),
+           ('51786198495', 'Traje', 250.30, 1, 3, 1);
 
 INSERT INTO usuarios (usuario, password, validado)
     VALUES ('admin', crypt('admin', gen_salt('bf', 10)), true),
@@ -137,3 +148,6 @@ INSERT INTO articulos_etiquetas (articulo_id, etiqueta_id)
             (6, 8);
 
 INSERT INTO cupones (fecha_inicio, fecha_fin, cupon, descuento) VALUES ('2023-05-16', '2023-12-31', 'DESCUENTO10', 10);
+
+INSERT INTO ofertas (fecha_inicio, fecha_fin, descuento, tipo_descuento)
+VALUES ('2023-06-01', '2023-06-15', 10, 'DESCUENTO10');

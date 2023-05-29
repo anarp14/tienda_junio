@@ -198,7 +198,21 @@
                 ?>
                 <?php foreach ($sent as $fila) : ?>
                     <div class="p-6 max-w-xs min-w-full bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700">
-                        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?> - <?= hh($fila['precio']) ?> € </h5>
+                        <?php if (isset($fila['oferta_id'])) : ?>
+                            <?php
+                            // Obtener información de la oferta
+                            $ofertaId = $fila['oferta_id'];
+                            $query = $pdo->prepare("SELECT * FROM ofertas WHERE id = :oferta_id");
+
+                            $query->execute(([ 'oferta_id' => $fila['oferta_id']]));
+                            $oferta = $query->fetch(PDO::FETCH_ASSOC);
+                            
+                            ?>
+                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-red-900 dark:text-white">OFERTA</h5>
+                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?> - <del> <?= hh($fila['precio'])?> </del> <?= hh($fila['precio']) - (hh($fila['precio']) * (hh($oferta['descuento']) / 100))  ?> € </h5>
+                        <?php else : ?>
+                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?> - <?= hh($fila['precio']) ?> € </h5>
+                        <?php endif ?>
                         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400"><?= hh($fila['categoria']) ?></p>
                         <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Existencias: <?= hh($fila['stock']) ?></p>
                         <?php if ($fila['stock'] > 0) : ?>
