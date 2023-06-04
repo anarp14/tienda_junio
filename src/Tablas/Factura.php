@@ -50,18 +50,18 @@ class Factura extends Modelo
         return $this->cupon_id;
     }
 
+
+
     public function getTotal(?PDO $pdo = null)
     {
         $pdo = $pdo ?? conectar();
 
-        if (!isset($this->total)  && isset($this->cupon_id)) {
-            $sent = $pdo->prepare('SELECT f.*, round(SUM(cantidad * (precio - ((precio * descuento)/100))) - (SUM(cantidad * (precio - ((precio * descuento)/100))) * c.descuento/100), 2) AS total
-            FROM facturas f
-            JOIN articulos_facturas l ON l.factura_id = f.id
-            JOIN articulos a ON l.articulo_id = a.id
-            JOIN cupones c ON c.id = f.cupon_id
-            GROUP BY f.id, c.descuento;
-            ');
+        if (!isset($this->total)) {
+            $sent = $pdo->prepare('SELECT SUM(cantidad * precio) AS total
+                                     FROM articulos_facturas l
+                                     JOIN articulos a
+                                       ON l.articulo_id = a.id
+                                    WHERE factura_id = :id');
             $sent->execute([':id' => $this->id]);
             $this->total = $sent->fetchColumn();
         }
@@ -79,22 +79,33 @@ class Factura extends Modelo
         $where = !empty($where)
             ? 'WHERE ' . implode(' AND ', $where)
             : '';
-        $sent = $pdo->prepare("SELECT f.*, SUM(cantidad * precio) AS total
-                                 FROM facturas f
-                                 JOIN articulos_facturas l
-                                   ON l.factura_id = f.id
-                                 JOIN articulos a
-                                   ON l.articulo_id = a.id
-                               $where
-                             GROUP BY f.id");
+
+        $sent = $pdo->prepare("SELECT f.*, SUM(CASE
+        WHEN o.oferta IS NULL THEN a.precio * ae.cantidad
+        WHEN o.oferta = '2x1' THEN (FLOOR(ae.cantidad / 2) + ae.cantidad % 2) * a.precio
+        WHEN o.oferta = '50%' THEN (ae.cantidad * a.precio) / 2
+        WHEN o.oferta = '2ª Unidad a mitad de precio' THEN (FLOOR(ae.cantidad / 2) * a.precio) + (ae.cantidad - FLOOR(ae.cantidad / 2)) * (a.precio / 2)
+        ELSE a.precio * ae.cantidad
+    END) AS total
+    FROM facturas f
+    JOIN articulos_facturas ae ON ae.factura_id = f.id
+    JOIN articulos a ON a.id = ae.articulo_id
+    LEFT JOIN ofertas o ON o.id = a.oferta_id
+    $where
+    GROUP BY f.id");
+
         $sent->execute($execute);
         $filas = $sent->fetchAll(PDO::FETCH_ASSOC);
         $res = [];
+
         foreach ($filas as $fila) {
+            $fila['total'] = ($fila['total'] * 1.21);
             $res[] = new static($fila);
         }
+
         return $res;
     }
+
 
     public function getLineas(?PDO $pdo = null): array
     {
@@ -153,5 +164,23 @@ class Factura extends Modelo
         }
 
         return false; // El artículo no se ha comprado
+    }
+
+    public function getArticulos(): array
+    {
+        $pdo = conectar();
+
+        $sent = $pdo->prepare('SELECT a.* FROM articulos a
+                               JOIN articulos_facturas af ON af.articulo_id = a.id
+                               WHERE af.factura_id = :factura_id');
+        $sent->execute([':factura_id' => $this->id]);
+        $filas = $sent->fetchAll(PDO::FETCH_ASSOC);
+
+        $articulos = [];
+        foreach ($filas as $fila) {
+            $articulos[] = new Articulo($fila);
+        }
+
+        return $articulos;
     }
 }

@@ -117,7 +117,6 @@
     }
 
     $vacio = empty($errores['cupon']);
-
     ?>
 
     <div class="container mx-auto">
@@ -132,35 +131,54 @@
                     <th scope="col" class="py-3 px-6">Cantidad</th>
                     <th scope="col" class="py-3 px-6">Precio</th>
                     <th scope="col" class="py-3 px-6">Importe</th>
+                    <th scope="col" class="py-3 px-6">Ahorro</th>
+                    <th scope="col" class="py-3 px-6">Oferta</th>
                     <th scope="col" class="py-3 px-6">Acciones</th>
                 </thead>
                 <tbody>
                     <?php $total = 0; ?>
                     <?php foreach ($carrito->getLineas() as $id => $linea) : ?>
                         <?php
-                        $articulo = $linea->getArticulo();
-                        $codigo = $articulo->getCodigo();
-                        $cantidad = $linea->getCantidad();
-                        $precio = $articulo->getPrecio();
-                        $importe = $cantidad * $precio;
-                        $total += $importe;
-
+                         $articulo = $linea->getArticulo();
+                         $codigo = $articulo->getCodigo();
+                         $cantidad = $linea->getCantidad();
+                         $precio = $articulo->getPrecio();
+                         $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
+                         $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
+                         $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
+                         $total += $importe; 
                         ?>
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                             <td class="py-4 px-6"><?= $articulo->getCodigo() ?></td>
                             <td class="py-4 px-6"><?= $articulo->getDescripcion() ?></td>
                             <td class="py-4 px-6 text-center"><?= $cantidad ?></td>
+                            <td class="py-4 px-6 text-center"><?= dinero($precio) ?></td>
+                            <td class="py-4 px-6 text-center"><?= dinero($importe) ?></td>
+                            <?php if (isset($cupon)) : ?>
+                                <?php
+                            $pdo = conectar();
+                            $cupones_ = $pdo->query("SELECT * FROM cupones WHERE cupon='" . hh($cupon) . "'");
+                            foreach ($cupones_ as $cupo) {
+                                $descuento = hh($cupo['descuento']);
+                                $ahorro = $ahorro + ($total * ($descuento / 100));
+                            }
+                            ?>
+                            <td class="py-4 px-6 text-center"><?= dinero($ahorro) ?></td>
+                            <?php else: ?>
+                                <td class="py-4 px-6 text-center"><?= dinero($ahorro) ?></td>
+                            <?php endif ?>
+                            
+                            <td class="py-4 px-6 text-center"><?= $oferta ?></td>
 
                             <td class="py-4 px-6 text-center">
-                                <?= dinero($precio) ?>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                <?= dinero($importe) ?>
-                            </td>
+                            <?php if (isset($cupon)) { ?>
+                                    <a href="/incrementar.php?id=<?= $articulo->getId() ?>&cupon=<?= hh($cupon) ?>" class="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900">+</a>
+                                    <a href="/decrementar.php?id=<?= $articulo->getId() ?>&cupon=<?= hh($cupon) ?>" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">-</a>
+                                <?php } else { ?>
+                                    <a href="/incrementar.php?id=<?= $articulo->getId() ?>" class="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900">+</a>
+                                    <a href="/decrementar.php?id=<?= $articulo->getId() ?>" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">-</a>
+                                <?php } ?>
 
-                            <td class="py-4 px-6 text-center">
-                                <a href="/incrementar.php?id=<?= $articulo->getId() ?>&cupon=<?= hh($cupon) ?>" class="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900">+</a>
-                                <a href="/decrementar.php?id=<?= $articulo->getId() ?>&cupon=<?= hh($cupon) ?>" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">-</a>
                             </td>
                         </tr>
                     <?php endforeach ?>

@@ -6,27 +6,35 @@ use App\Tablas\Articulo;
 
 require '../vendor/autoload.php';
 
-$id = obtener_get('id');
-$stock = obtener_get('stock');
-$cupon = obtener_get('cupon');
 
-$id == null ?: volver();
+try {
+    $id = obtener_get('id');
+    $cupon = obtener_get('cupon');
+    $stock = obtener_get('stock');
 
-$articulo = Articulo::obtener($id);
+    if ($id === null) {
+        return volver();
+    }
 
-$articulo == null ?: volver();
+    $articulo = Articulo::obtener($id);
 
-$carrito = unserialize(carrito());
+    if ($articulo === null) {
+        return volver();
+    }
 
-$carrito->insertar($id);
 
-$_SESSION['carrito'] = serialize($carrito);
+    $carrito = unserialize(carrito());
+    $carrito->insertar($id);
+    $_SESSION['carrito'] = serialize($carrito);
 
-$params = "";
-if ($cupon !== null) {
-    $params .= '&cupon=' . hh($cupon);
+} catch (ValueError $e) {
+    // TODO: mostrar mensaje de error en un Alert
 }
-// Redirige de vuelta a comprar
-header("Location: /comprar.php?$params");
 
+if($cupon !== null) {
+    
+    $url .= '&cupon=' . hh($cupon);
+}
+
+header("Location: /comprar.php?$url");
 

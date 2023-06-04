@@ -11,7 +11,6 @@ if (!($usuario = \App\Tablas\Usuario::logueado())) {
 
 $id = obtener_get('id');
 
-
 if (!isset($id)) {
     return volver();
 }
@@ -19,7 +18,6 @@ if (!isset($id)) {
 $pdo = conectar();
 
 $factura = Factura::obtener($id, $pdo);
-
 $cupon_factura = $factura->getCupon_id();
 
 if (!isset($factura)) {
@@ -32,48 +30,51 @@ if ($factura->getUsuarioId() != $usuario->id) {
 
 $filas_tabla = '';
 $total = 0;
-
-$metodo_pago = $factura->getMetodo_pago();
+$descuentoTotal = 0;
 
 foreach ($factura->getLineas($pdo) as $linea) {
     $articulo = $linea->getArticulo();
     $codigo = $articulo->getCodigo();
     $descripcion = $articulo->getDescripcion();
     $cantidad = $linea->getCantidad();
-    $precio_antiguo = dinero($articulo->getPrecio());
-    $precio = $articulo->getPrecio();
+    $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
+
+    $precio = $articulo->getPrecio(); // Inicializar el precio correctamente
 
     if (isset($cupon_factura)) {
         $pdo = conectar();
         $sent = $pdo->prepare("SELECT * FROM cupones WHERE id = :cupon_id");
         $sent->execute([':cupon_id' => $cupon_factura]);
-        foreach ($sent as $cupon) :
+        foreach ($sent as $cupon) {
             $descuento = hh($cupon['descuento']);
-            $cupon_descuento= $cupon['cupon'];
-            $precio= $precio - ($precio * (hh($cupon['descuento']) / 100));
-            $importe =($cantidad * $precio);
-            $precio = dinero($precio);
-           
-        endforeach;
-    } else {
-        $importe =  dinero($cantidad * $precio);
-        $precio = dinero($precio);
+            $cupon_descuento = $cupon['cupon'];
+            $precio = $precio - (($precio * $descuento) / 100);
+            $descuentoTotal += (($factura->getTotal() * $descuento) / 100);
+        }
     }
 
+    $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
+    $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'] + $descuentoTotal;
+    $total += $importe;
+
+    $precio = dinero($precio);
+    $importe = dinero($importe);
+    $ahorro = dinero($ahorro);
+    $iva = $total * 0.21;
+    $totalConIva = dinero($total + $iva);
 
     $filas_tabla .= <<<EOF
         <tr>
             <td>$codigo</td>
-            <td>$metodo_pago </td>
             <td>$descripcion</td>
             <td>$cantidad</td>
-            <td><del>$precio_antiguo </del></td>
             <td>$precio</td>
             <td>$importe</td>
+            <td>$ahorro</td>
+            <td>$oferta</td>
         </tr>
     EOF;
 }
-$total += round($importe*1.21, 2); //total de abajo
 
 $res = <<<EOT
 <p>Factura número: {$factura->id}</p>
@@ -81,20 +82,20 @@ $res = <<<EOT
 <table border="1" class="font-sans mx-auto">
     <tr>
         <th>Código</th>
-        <th>Método de pago</th>
         <th>Descripción</th>
         <th>Cantidad</th>
         <th>Precio</th>
-        <th>Precio rebajado</th>
         <th>Importe</th>
+        <td>Ahorro</td>
+        <td>Oferta</td>
     </tr>
     <tbody>
         $filas_tabla
     </tbody>
 </table>
 
-<p>Total: $total €</p>
-<p>Cupon utilizado: $cupon_descuento</p>
+<p>Total (+IVA 21%): $totalConIva</p>
+<p>Cupón utilizado: $cupon_descuento</p>
 EOT;
 
 // Create an instance of the class:
@@ -106,3 +107,4 @@ $mpdf->WriteHTML($res, \Mpdf\HTMLParserMode::HTML_BODY);
 
 // Output a PDF file directly to the browser
 $mpdf->Output();
+?>

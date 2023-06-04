@@ -28,7 +28,7 @@ session_start() ?>
         [':usuario_id' => Usuario::logueado()->id]
     );
 
-    
+
     $pdo = conectar();
 
 
@@ -57,22 +57,24 @@ session_start() ?>
                                 <?= hh($created_at->format('d-m-Y H:i:s')) ?>
                             </td>
                             <td class="py-4 px-6">
-                            <?php 
+                                <?php
                                 $cupon_factura = $factura->getCupon_id(); ?>
-                                <?php if($cupon_factura == null):   ?>
-                                    <?= round(($factura->getTotal()*1.21), 2) ?> €
-                                <?php endif ?>
-                                <?php if($cupon_factura): ?>
-                                    <?php $pdo = conectar(); 
+
+                                <?php if ($cupon_factura) : ?>
+                                    <?php $pdo = conectar();
                                     $sent = $pdo->prepare("SELECT * FROM cupones WHERE id = :cupon_id");
                                     $sent->execute([':cupon_id' => $cupon_factura]); ?>
-                                    <?php foreach($sent as $cupon): ?>
-                                        <?php if(isset($cupon['cupon'])): ?>
-                                            <?= round((($factura->getTotal()) - (($factura->getTotal()) * ($cupon["descuento"]/100))) * 1.21, 2) ?> €
+                                    <?php foreach ($sent as $cupon) : ?>
+                                        <?php if (isset($cupon['cupon'])) : ?>
+                                            <?= dinero((($factura->getTotal()) - (($factura->getTotal()) * ($cupon["descuento"] / 100))) ) ?> 
                                             <?php endif ?>
                                     <?php endforeach; ?>
+                                <?php else : ?>
+                                    
+                                    <?=dinero($factura->getTotal()) ?> 
                                 <?php endif ?>
                             </td>
+
                             <td>
                                 <?= hh($factura->getMetodo_pago()) ?>
                             </td>

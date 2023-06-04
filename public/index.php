@@ -107,25 +107,29 @@
     $having_mayor_valoracion = '';
     $cond2 = '';
     $condicion2 = '';
-    $condicion3 = '';
+    $order1 = '';
 
 
     if ($mayor_valoracion) {
         $condicion2 = 'JOIN valoraciones val ON (val.articulo_id = articulos.id) ';
-        $condicion3 = 'ORDER BY AVG(valoracion) DESC LIMIT 1';
+        $order1 = 'ORDER BY AVG(valoracion) DESC LIMIT 1';
         $cond2 = ', AVG(valoracion)';
+    } else {
+        $order2 = 'ORDER BY o.oferta';
     }
 
 
-    $sent = $pdo->prepare("SELECT articulos.*, c.categoria, c.id as catid $cond $cond2 
+    $sent = $pdo->prepare("SELECT articulos.*, c.categoria, o.oferta, c.id as catid $cond $cond2 
     FROM articulos
     JOIN categorias c ON (articulos.categoria_id = c.id) 
     JOIN articulos_etiquetas ae ON (articulos.id = ae.articulo_id)
     JOIN etiquetas e ON (ae.etiqueta_id = e.id)
+    LEFT JOIN ofertas o ON (o.id = articulos.oferta_id)
     $condicion $condicion2
     $where $where_sin_valoracion
-    GROUP BY articulos.id, c.categoria, c.id $condicion3
+    GROUP BY articulos.id, c.categoria, c.id, o.oferta $order2 $order1
     $having  $having_mas_valoraciones 
+
     ");
 
 
@@ -199,17 +203,8 @@
                 <?php foreach ($sent as $fila) : ?>
                     <div class="p-6 max-w-xs min-w-full bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700">
                         <?php if (isset($fila['oferta_id'])) : ?>
-                            <?php
-                            // Obtener información de la oferta
-                            $ofertaId = $fila['oferta_id'];
-                            $query = $pdo->prepare("SELECT * FROM ofertas WHERE id = :oferta_id");
-
-                            $query->execute(([ 'oferta_id' => $fila['oferta_id']]));
-                            $oferta = $query->fetch(PDO::FETCH_ASSOC);
-                            
-                            ?>
-                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-red-900 dark:text-white">OFERTA</h5>
-                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?> - <del> <?= hh($fila['precio'])?> </del> <?= hh($fila['precio']) - (hh($fila['precio']) * (hh($oferta['descuento']) / 100))  ?> € </h5>
+                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-red-900 dark:text-white">OFERTA <?= hh($fila['oferta']) ?> </h5>
+                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?> -  <?= hh($fila['precio'])?>   € </h5>
                         <?php else : ?>
                             <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"><?= hh($fila['descripcion']) ?> - <?= hh($fila['precio']) ?> € </h5>
                         <?php endif ?>
@@ -240,6 +235,7 @@
                                                 WHERE usuario_id = :usuario_id AND articulo_id = :articulo_id");
                                     $sent3->execute(['usuario_id' => $usuario_id, 'articulo_id' => $fila['id']]);
                                     $valoracion_usuario = $sent3->fetch(PDO::FETCH_ASSOC);
+
                                     ?>
                                     <select name="valoracion" id="valoracion">
                                         <option value="" <?= (!$usuario_id) ? 'selected' : '' ?>></option>
