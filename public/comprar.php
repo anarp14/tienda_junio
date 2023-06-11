@@ -37,11 +37,6 @@ session_start();
         }
 
         // Crear factura
-        $usuario = \App\Tablas\Usuario::logueado();
-        $usuario_id = $usuario->id;
-        $metodo_pago = obtener_post('metodo_pago');
-        $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
-        $puntos = $sent2->fetch();
 
         // Obtener el ID del cupón si se proporciona
         $cupon_id = null;
@@ -56,52 +51,106 @@ session_start();
             }
         }
 
-        // Obtener el total de la factura
+        if (obtener_post('_puntos') !== null) {
 
-        $total_factura = 0;
+            $usuario = \App\Tablas\Usuario::logueado();
+            $usuario_id = $usuario->id;
+            $metodo_pago = obtener_post('metodo_pago');
+            $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
+            $puntos = $sent2->fetch();
 
-        foreach ($carrito->getLineas() as $id => $linea) {
-            $articulo = $linea->getArticulo();
-            $codigo = $articulo->getCodigo();
-            $cantidad = $linea->getCantidad();
-            $precio = $articulo->getPrecio();
-            $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
-            $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
-            $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
-            $total += $importe;
-        }
+            $total = 0;
+
+            foreach ($carrito->getLineas() as $id => $linea) {
+                $articulo = $linea->getArticulo();
+                $codigo = $articulo->getCodigo();
+                $cantidad = $linea->getCantidad();
+                $precio = $articulo->getPrecio();
+                $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
+                $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
+                $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
+                $total += $importe;
+            }
+
+            $usuario = \App\Tablas\Usuario::logueado();
+            $usuario_id = $usuario->id;
+            $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
+            $res = $sent2->fetch();
+            $rebaja = $total - $res[0] ;
+            $restantes  = 0;
+            if ($rebaja < 0) {
+                $rebaja = 0;
+                $restantes = $res[0] - $total;
+            }
+
+            $pdo->beginTransaction();
+            $sent = $pdo->prepare('INSERT INTO facturas (usuario_id, metodo_pago, cupon_id, total)
+            VALUES (:usuario_id, :metodo_pago, :cupon_id, :total)
+            RETURNING id');
+            $sent->execute([':usuario_id' => $usuario_id, ':metodo_pago' => $metodo_pago, ':cupon_id' => $cupon_id, ':total' => $rebaja]);
+            $factura_id = $sent->fetchColumn();
+            $lineas = $carrito->getLineas();
+            $values = [];
+            $execute = [':f' => $factura_id];
+            $i = 1;
+
+            $sent3 = $pdo->query("UPDATE usuarios 
+                                  SET puntos = $restantes 
+                                  WHERE id = $usuario_id");
+
+        } else {
+
+            $usuario = \App\Tablas\Usuario::logueado();
+            $usuario_id = $usuario->id;
+            $metodo_pago = obtener_post('metodo_pago');
+            $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
+            $puntos = $sent2->fetch();
 
 
-        $pdo->beginTransaction();
-        $sent = $pdo->prepare('INSERT INTO facturas (usuario_id, metodo_pago, cupon_id, total)
+            // Obtener el total de la factura
+
+            $total = 0;
+
+            foreach ($carrito->getLineas() as $id => $linea) {
+                $articulo = $linea->getArticulo();
+                $codigo = $articulo->getCodigo();
+                $cantidad = $linea->getCantidad();
+                $precio = $articulo->getPrecio();
+                $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
+                $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
+                $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
+                $total += $importe;
+            }
+
+            $pdo->beginTransaction();
+            $sent = $pdo->prepare('INSERT INTO facturas (usuario_id, metodo_pago, cupon_id, total)
                     VALUES (:usuario_id, :metodo_pago, :cupon_id, :total)
                     RETURNING id');
-        $sent->execute([
-            ':usuario_id' => $usuario_id,
-            ':metodo_pago' => $metodo_pago,
-            ':cupon_id' => $cupon_id,
-            ':total' => $total
-        ]);
-        $factura_id = $sent->fetchColumn();
+            $sent->execute([
+                ':usuario_id' => $usuario_id,
+                ':metodo_pago' => $metodo_pago,
+                ':cupon_id' => $cupon_id,
+                ':total' => $total
+            ]);
+            $factura_id = $sent->fetchColumn();
 
 
-        $lineas = $carrito->getLineas();
-        $values = [];
-        $execute = [':f' => $factura_id];
-        $i = 1;
+            $lineas = $carrito->getLineas();
+            $values = [];
+            $execute = [':f' => $factura_id];
+            $i = 1;
 
-        $sumaPuntos = round(($total / 2 + $puntos[0]) );
+            $sumaPuntos = round(($total / 2 + $puntos[0]));
 
 
-        $sent3 = $pdo->prepare("UPDATE usuarios 
+            $sent3 = $pdo->prepare("UPDATE usuarios 
                                   SET puntos = :puntos
                                   WHERE id = :id");
-        $sent3->execute([
-            ':puntos' => $sumaPuntos,
-            ':id' => $usuario_id
-        ]);
-
-
+            $sent3->execute([
+                ':puntos' => $sumaPuntos,
+                ':id' => $usuario_id
+            ]);
+        }
         foreach ($lineas as $id => $linea) {
             $values[] = "(:a$i, :f, :c$i)";
             $execute[":a$i"] = $id;
@@ -157,9 +206,6 @@ session_start();
     }
 
     $vacio = empty($errores['cupon']);
-
-
-
     ?>
 
     <div class="container mx-auto">
@@ -293,6 +339,12 @@ session_start();
                     </tr>
                 </tfoot>
             </table> <br>
+            <div class="flex justify-center font-normal text-gray-700 dark:text-gray-400">
+                <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
+                    <input type="checkbox" name="_puntos" value="1">
+                    Utilizar los puntos acumulados
+                </label>
+            </div> <br>
             <div class="flex justify-center">
                 <input type="hidden" name="_testigo" value="1">
                 <button type="submit" href="" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>

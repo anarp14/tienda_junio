@@ -13,7 +13,7 @@ class Factura extends Modelo
     public $usuario_id;
     public $metodo_pago;
     public $cupon_id;
-    private $total;
+    public $total;
 
     public function __construct(array $campos)
     {
@@ -52,20 +52,8 @@ class Factura extends Modelo
 
 
 
-    public function getTotal(?PDO $pdo = null)
+    public function getTotal()
     {
-        $pdo = $pdo ?? conectar();
-
-        if (!isset($this->total)) {
-            $sent = $pdo->prepare('SELECT SUM(cantidad * precio) AS total
-                                     FROM articulos_facturas l
-                                     JOIN articulos a
-                                       ON l.articulo_id = a.id
-                                    WHERE factura_id = :id');
-            $sent->execute([':id' => $this->id]);
-            $this->total = $sent->fetchColumn();
-        }
-
         return $this->total;
     }
 
@@ -86,7 +74,7 @@ class Factura extends Modelo
         WHEN o.oferta = '50%' THEN (ae.cantidad * a.precio) / 2
         WHEN o.oferta = '2ª Unidad a mitad de precio' THEN (FLOOR(ae.cantidad / 2) * a.precio) + (ae.cantidad - FLOOR(ae.cantidad / 2)) * (a.precio / 2)
         ELSE a.precio * ae.cantidad
-    END) AS total
+    END) AS total_oferta
     FROM facturas f
     JOIN articulos_facturas ae ON ae.factura_id = f.id
     JOIN articulos a ON a.id = ae.articulo_id
@@ -131,8 +119,6 @@ class Factura extends Modelo
         $stmt->execute([':factura_id' => $this->id]);
         return $stmt->fetchColumn();
     }
-
-    // ...
 
     public function getArticulosComprados(): array
     {
