@@ -1,4 +1,6 @@
-<?php session_start() ?>
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -11,8 +13,9 @@
 </head>
 
 <body>
-    <?php require '../vendor/autoload.php';
-     
+    <?php
+    require '../vendor/autoload.php';
+
     if (!\App\Tablas\Usuario::esta_logueado()) {
         return redirigir_login();
     }
@@ -37,6 +40,8 @@
         $usuario = \App\Tablas\Usuario::logueado();
         $usuario_id = $usuario->id;
         $metodo_pago = obtener_post('metodo_pago');
+        $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
+        $puntos = $sent2->fetch();
 
         // Obtener el ID del cupón si se proporciona
         $cupon_id = null;
@@ -51,20 +56,51 @@
             }
         }
 
+        // Obtener el total de la factura
+
+        $total_factura = 0;
+
+        foreach ($carrito->getLineas() as $id => $linea) {
+            $articulo = $linea->getArticulo();
+            $codigo = $articulo->getCodigo();
+            $cantidad = $linea->getCantidad();
+            $precio = $articulo->getPrecio();
+            $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
+            $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
+            $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
+            $total += $importe;
+        }
+
+
         $pdo->beginTransaction();
-        $sent = $pdo->prepare('INSERT INTO facturas (usuario_id, metodo_pago, cupon_id)
-                    VALUES (:usuario_id, :metodo_pago, :cupon_id)
+        $sent = $pdo->prepare('INSERT INTO facturas (usuario_id, metodo_pago, cupon_id, total)
+                    VALUES (:usuario_id, :metodo_pago, :cupon_id, :total)
                     RETURNING id');
         $sent->execute([
             ':usuario_id' => $usuario_id,
             ':metodo_pago' => $metodo_pago,
-            ':cupon_id' => $cupon_id
+            ':cupon_id' => $cupon_id,
+            ':total' => $total
         ]);
         $factura_id = $sent->fetchColumn();
+
+
         $lineas = $carrito->getLineas();
         $values = [];
         $execute = [':f' => $factura_id];
         $i = 1;
+
+        $sumaPuntos = round(($total / 2 + $puntos[0]) );
+
+
+        $sent3 = $pdo->prepare("UPDATE usuarios 
+                                  SET puntos = :puntos
+                                  WHERE id = :id");
+        $sent3->execute([
+            ':puntos' => $sumaPuntos,
+            ':id' => $usuario_id
+        ]);
+
 
         foreach ($lineas as $id => $linea) {
             $values[] = "(:a$i, :f, :c$i)";
@@ -77,6 +113,7 @@
         $sent = $pdo->prepare("INSERT INTO articulos_facturas (articulo_id, factura_id, cantidad)
                            VALUES $values");
         $sent->execute($execute);
+
         foreach ($lineas as $id => $linea) {
             $cantidad = $linea->getCantidad();
             $sent = $pdo->prepare('UPDATE articulos
@@ -84,9 +121,12 @@
                                 WHERE id = :id');
             $sent->execute([':id' => $id, ':cantidad' => $cantidad]);
         }
+
         $pdo->commit();
+
         $_SESSION['exito'] = 'La factura se ha creado correctamente.';
         unset($_SESSION['carrito']);
+
         return volver();
     }
 
@@ -117,11 +157,14 @@
     }
 
     $vacio = empty($errores['cupon']);
+
+
+
     ?>
 
     <div class="container mx-auto">
         <?php require '../src/_menu.php';
-        require '../src/_alerts.php' ;
+        require '../src/_alerts.php';
         ?>
         <div class="overflow-y-auto py-4 px-3 bg-gray-50 rounded dark:bg-gray-800">
             <table class="mx-auto text-sm text-left text-gray-500 dark:text-gray-400">
@@ -139,14 +182,14 @@
                     <?php $total = 0; ?>
                     <?php foreach ($carrito->getLineas() as $id => $linea) : ?>
                         <?php
-                         $articulo = $linea->getArticulo();
-                         $codigo = $articulo->getCodigo();
-                         $cantidad = $linea->getCantidad();
-                         $precio = $articulo->getPrecio();
-                         $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
-                         $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
-                         $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
-                         $total += $importe; 
+                        $articulo = $linea->getArticulo();
+                        $codigo = $articulo->getCodigo();
+                        $cantidad = $linea->getCantidad();
+                        $precio = $articulo->getPrecio();
+                        $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
+                        $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
+                        $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
+                        $total += $importe;
                         ?>
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                             <td class="py-4 px-6"><?= $articulo->getCodigo() ?></td>
@@ -156,22 +199,22 @@
                             <td class="py-4 px-6 text-center"><?= dinero($importe) ?></td>
                             <?php if (isset($cupon)) : ?>
                                 <?php
-                            $pdo = conectar();
-                            $cupones_ = $pdo->query("SELECT * FROM cupones WHERE cupon='" . hh($cupon) . "'");
-                            foreach ($cupones_ as $cupo) {
-                                $descuento = hh($cupo['descuento']);
-                                $ahorro = $ahorro + ($total * ($descuento / 100));
-                            }
-                            ?>
-                            <td class="py-4 px-6 text-center"><?= dinero($ahorro) ?></td>
-                            <?php else: ?>
+                                $pdo = conectar();
+                                $cupones_ = $pdo->query("SELECT * FROM cupones WHERE cupon='" . hh($cupon) . "'");
+                                foreach ($cupones_ as $cupo) {
+                                    $descuento = hh($cupo['descuento']);
+                                    $ahorro = $ahorro + ($total * ($descuento / 100));
+                                }
+                                ?>
+                                <td class="py-4 px-6 text-center"><?= dinero($ahorro) ?></td>
+                            <?php else : ?>
                                 <td class="py-4 px-6 text-center"><?= dinero($ahorro) ?></td>
                             <?php endif ?>
-                            
+
                             <td class="py-4 px-6 text-center"><?= $oferta ?></td>
 
                             <td class="py-4 px-6 text-center">
-                            <?php if (isset($cupon)) { ?>
+                                <?php if (isset($cupon)) { ?>
                                     <a href="/incrementar.php?id=<?= $articulo->getId() ?>&cupon=<?= hh($cupon) ?>" class="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900">+</a>
                                     <a href="/decrementar.php?id=<?= $articulo->getId() ?>&cupon=<?= hh($cupon) ?>" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">-</a>
                                 <?php } else { ?>
@@ -254,7 +297,6 @@
                 <input type="hidden" name="_testigo" value="1">
                 <button type="submit" href="" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-900">Realizar pedido</button>
             </div>
-
             </form>
         </div>
     </div>

@@ -11,8 +11,7 @@ CREATE TABLE articulos (
     precio numeric(7, 2) NOT NULL,
     stock int NOT NULL,
     categoria_id bigint NOT NULL REFERENCES categorias (id),
-    oferta_id bigint REFERENCES ofertas (id),
-    precio_descuento numeric(7,2) NOT NULL
+    oferta_id bigint REFERENCES ofertas (id)
 );
 
 DROP TABLE IF EXISTS categorias CASCADE;
@@ -70,9 +69,14 @@ DROP TABLE IF EXISTS usuarios CASCADE;
 CREATE TABLE usuarios (
     id bigserial PRIMARY KEY,
     usuario varchar(255) NOT NULL UNIQUE,
+    nombre varchar(20) NOT NULL,
+    apellidos varchar(255) NOT NULL,
+    email varchar (100) NOT NULL,
     password varchar(255) NOT NULL,
-    validado boolean NOT NULL
+    validado boolean NOT NULL,
+    puntos int NOT NULL DEFAULT 0
 );
+
 
 DROP TABLE IF EXISTS facturas CASCADE;
 
@@ -81,7 +85,8 @@ CREATE TABLE facturas (
     created_at timestamp NOT NULL DEFAULT localtimestamp(0),
     usuario_id bigint NOT NULL REFERENCES usuarios (id),
     metodo_pago varchar(50) NOT NULL,
-    cupon_id bigint REFERENCES cupones(id)
+    cupon_id bigint REFERENCES cupones(id),
+    total      numeric(7, 2)
 );
 
 DROP TABLE IF EXISTS articulos_facturas CASCADE;
@@ -113,6 +118,9 @@ CREATE TABLE cupones (
     descuento DECIMAL(10, 2) NOT NULL
 );
 
+
+
+
 -- Carga inicial de datos de prueba:
 INSERT INTO
     articulos (
@@ -121,20 +129,18 @@ INSERT INTO
         precio,
         stock,
         categoria_id,
-        oferta_id,
-        precio_descuento
+        oferta_id
     )
 VALUES
-    ('18273892389', 'Yogur piña', 2.50, 20, 2, null, 0),
-    ('83745828273', 'Tigretón', 1.10, 30, 2, 3, 0),
+    ('18273892389', 'Yogur piña', 2.50, 20, 2, null),
+    ('83745828273', 'Tigretón', 1.10, 30, 2, 3),
     (
         '51736128495',
         'Disco duro SSD 500 GB',
         150.30,
         15,
         1,
-        null,
-        0
+        null
     ),
     (
         '51786128435',
@@ -142,22 +148,45 @@ VALUES
         180.30,
         0,
         1,
-        null,
-        0
+        null
     ),
-    ('83745228673', 'Chandal', 30.10, 15, 3, 1, 0),
-    ('51786198495', 'Traje', 250.30, 1, 3, 2, 0);
+    ('83745228673', 'Chandal', 30.10, 15, 3, 1),
+    ('51786198495', 'Traje', 250.30, 1, 3, 2);
 
 INSERT INTO
-    usuarios (usuario, password, validado)
+    usuarios (
+        usuario,
+        nombre,
+        apellidos,
+        email,
+        password,
+        validado
+    )
 VALUES
     (
         'admin',
+        'Admin',
+        'admin',
+        'administrador@gmail.com',
         crypt('admin', gen_salt('bf', 10)),
         true
     ),
-    ('pepe', crypt('pepe', gen_salt('bf', 10)), true),
-    ('juan', crypt('juan', gen_salt('bf', 10)), false);
+    (
+        'pepe',
+        'Pepe',
+        'Román Hidaldo',
+        'pepe@gmail.com',
+        crypt('pepe', gen_salt('bf', 10)),
+        true
+    ),
+    (
+        'juan',
+        'Juan',
+        'Pére',
+        'juan@gmail.com',
+        crypt('juan',gen_salt('bf', 10)),
+        false
+    );
 
 INSERT INTO
     categorias (categoria)

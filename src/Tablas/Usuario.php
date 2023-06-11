@@ -10,6 +10,7 @@ class Usuario extends Modelo
     public $id;
     public $usuario;
     public $validado;
+    public $puntos;
 
     public function __construct(array $campos)
     {

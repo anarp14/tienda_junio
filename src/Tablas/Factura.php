@@ -99,7 +99,7 @@ class Factura extends Modelo
         $res = [];
 
         foreach ($filas as $fila) {
-            $fila['total'] = ($fila['total'] * 1.21);
+            $fila['total'] = ($fila['total']);
             $res[] = new static($fila);
         }
 

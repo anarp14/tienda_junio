@@ -66,12 +66,12 @@ session_start() ?>
                                     $sent->execute([':cupon_id' => $cupon_factura]); ?>
                                     <?php foreach ($sent as $cupon) : ?>
                                         <?php if (isset($cupon['cupon'])) : ?>
-                                            <?= dinero((($factura->getTotal()) - (($factura->getTotal()) * ($cupon["descuento"] / 100))) ) ?> 
-                                            <?php endif ?>
+                                            <?= dinero((($factura->getTotal()) - (($factura->getTotal()) * ($cupon["descuento"] / 100))) * 1.21) ?>
+                                        <?php endif ?>
                                     <?php endforeach; ?>
                                 <?php else : ?>
-                                    
-                                    <?=dinero($factura->getTotal()) ?> 
+
+                                    <?= dinero($factura->getTotal() * 1.21) ?>
                                 <?php endif ?>
                             </td>
 
@@ -92,6 +92,8 @@ session_start() ?>
                                 </button>
                             </td>
                         </tr>
+
+                     
                     <?php endforeach ?>
                 </tbody>
             </table>
