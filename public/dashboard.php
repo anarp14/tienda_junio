@@ -27,11 +27,6 @@ session_start() ?>
         ['usuario_id = :usuario_id'],
         [':usuario_id' => Usuario::logueado()->id]
     );
-
-
-    $pdo = conectar();
-
-
     ?>
 
     <div class="container mx-auto">
@@ -57,24 +52,8 @@ session_start() ?>
                                 <?= hh($created_at->format('d-m-Y H:i:s')) ?>
                             </td>
                             <td class="py-4 px-6">
-                                <?php
-                                $cupon_factura = $factura->getCupon_id(); ?>
-
-                                <?php if ($cupon_factura) : ?>
-                                    <?php $pdo = conectar();
-                                    $sent = $pdo->prepare("SELECT * FROM cupones WHERE id = :cupon_id");
-                                    $sent->execute([':cupon_id' => $cupon_factura]); ?>
-                                    <?php foreach ($sent as $cupon) : ?>
-                                        <?php if (isset($cupon['cupon'])) : ?>
-                                            <?= dinero((($factura->getTotal()) - (($factura->getTotal()) * ($cupon["descuento"] / 100))) * 1.21) ?>
-                                        <?php endif ?>
-                                    <?php endforeach; ?>
-                                <?php else : ?>
-
-                                    <?= dinero($factura->getTotal() * 1.21) ?>
-                                <?php endif ?>
+                                <?= dinero($factura->getTotal() * 1.21) ?>
                             </td>
-
                             <td>
                                 <?= hh($factura->getMetodo_pago()) ?>
                             </td>
@@ -93,7 +72,7 @@ session_start() ?>
                             </td>
                         </tr>
 
-                     
+
                     <?php endforeach ?>
                 </tbody>
             </table>

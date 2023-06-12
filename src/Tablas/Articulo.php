@@ -58,7 +58,6 @@ class Articulo extends Modelo
     {
         return $this->id;
     }
- 
 
     public function getCategoriaNombre(PDO $pdo)
     {

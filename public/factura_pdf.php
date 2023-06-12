@@ -19,6 +19,7 @@ $pdo = conectar();
 
 $factura = Factura::obtener($id, $pdo);
 $cupon_factura = $factura->getCupon_id();
+$usuario = \App\Tablas\Usuario::logueado();
 
 if (!isset($factura)) {
     return volver();
@@ -28,9 +29,9 @@ if ($factura->getUsuarioId() != $usuario->id) {
     return volver();
 }
 
+
 $filas_tabla = '';
 $total = 0;
-$descuentoTotal = 0;
 
 foreach ($factura->getLineas($pdo) as $linea) {
     $articulo = $linea->getArticulo();
@@ -41,27 +42,19 @@ foreach ($factura->getLineas($pdo) as $linea) {
 
     $precio = $articulo->getPrecio(); // Inicializar el precio correctamente
 
-    if (isset($cupon_factura)) {
-        $pdo = conectar();
-        $sent = $pdo->prepare("SELECT * FROM cupones WHERE id = :cupon_id");
-        $sent->execute([':cupon_id' => $cupon_factura]);
-        foreach ($sent as $cupon) {
-            $descuento = hh($cupon['descuento']);
-            $cupon_descuento = $cupon['cupon'];
-            $precio = $precio - (($precio * $descuento) / 100);
-            $descuentoTotal += (($factura->getTotal() * $descuento) / 100);
-        }
-    }
-
     $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
-    $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'] + $descuentoTotal;
+    $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
     $total += $importe;
 
     $precio = dinero($precio);
     $importe = dinero($importe);
-    $ahorro = dinero($ahorro);
-    $iva = $total * 0.21;
-    $totalConIva = dinero($total + $iva);
+    $ahorro = dinero($ahorro + $puntos);
+    $total = $factura->getTotal();
+
+   
+    $restantes = $total - $puntos;
+    $totalConIva = dinero($total * 1.21 );
+
 
     $filas_tabla .= <<<EOF
         <tr>
@@ -95,7 +88,6 @@ $res = <<<EOT
 </table>
 
 <p>Total (+IVA 21%): $totalConIva</p>
-<p>Cupón utilizado: $cupon_descuento</p>
 EOT;
 
 // Create an instance of the class:
@@ -107,4 +99,3 @@ $mpdf->WriteHTML($res, \Mpdf\HTMLParserMode::HTML_BODY);
 
 // Output a PDF file directly to the browser
 $mpdf->Output();
-?>

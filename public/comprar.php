@@ -21,7 +21,48 @@ session_start();
     }
 
     $carrito = unserialize(carrito());
-    $cupon = obtener_get('cupon');
+
+       // Obtener el ID del cupón si se proporciona
+       $cupon_id = null;
+       $cupon = obtener_get('cupon');
+
+       if (isset($cupon)) {
+        $pdo = conectar();
+           $sent = $pdo->prepare('SELECT id FROM cupones WHERE upper(unaccent(cupon)) = upper(unaccent(:cupon))');
+           $sent->execute([':cupon' => $cupon]);
+           $cupon_encontrado = $sent->fetch();
+           if ($cupon_encontrado) {
+               $cupon_id = $cupon_encontrado['id'];
+           }
+       }
+
+       function calcular_total_factura($carrito, $cupon_id)
+       {
+           $total = 0;
+       
+           foreach ($carrito->getLineas() as $id => $linea) {
+               $articulo = $linea->getArticulo();
+               $cantidad = $linea->getCantidad();
+               $precio = $articulo->getPrecio();
+               $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
+               $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
+               $total += $importe;
+           }
+       
+           // Aplicar descuento del cupón si se proporciona
+           if ($cupon_id) {
+               $pdo = conectar();
+               $sent = $pdo->prepare('SELECT descuento FROM cupones WHERE id = :cupon_id');
+               $sent->execute([':cupon_id' => $cupon_id]);
+               $cupon = $sent->fetch();
+               if ($cupon) {
+                   $descuento = $cupon['descuento'];
+                   $total -= ($total * ($descuento / 100));
+               }
+           }
+       
+           return $total;
+       }
 
     if (obtener_post('_testigo') !== null) {
         $pdo = conectar();
@@ -38,49 +79,19 @@ session_start();
 
         // Crear factura
 
-        // Obtener el ID del cupón si se proporciona
-        $cupon_id = null;
-        $cupon = obtener_get('cupon');
-
-        if (isset($cupon)) {
-            $sent = $pdo->prepare('SELECT id FROM cupones WHERE upper(unaccent(cupon)) = upper(unaccent(:cupon))');
-            $sent->execute([':cupon' => $cupon]);
-            $cupon_encontrado = $sent->fetch();
-            if ($cupon_encontrado) {
-                $cupon_id = $cupon_encontrado['id'];
-            }
-        }
 
         if (obtener_post('_puntos') !== null) {
 
+            $total = calcular_total_factura($carrito, $cupon_id);
             $usuario = \App\Tablas\Usuario::logueado();
             $usuario_id = $usuario->id;
             $metodo_pago = obtener_post('metodo_pago');
-            $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
-            $puntos = $sent2->fetch();
-
-            $total = 0;
-
-            foreach ($carrito->getLineas() as $id => $linea) {
-                $articulo = $linea->getArticulo();
-                $codigo = $articulo->getCodigo();
-                $cantidad = $linea->getCantidad();
-                $precio = $articulo->getPrecio();
-                $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
-                $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
-                $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
-                $total += $importe;
-            }
-
-            $usuario = \App\Tablas\Usuario::logueado();
-            $usuario_id = $usuario->id;
-            $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
-            $res = $sent2->fetch();
-            $rebaja = $total - $res[0] ;
+            $puntos = $usuario->getPuntos();
+            $rebaja = $total - $puntos;
             $restantes  = 0;
             if ($rebaja < 0) {
                 $rebaja = 0;
-                $restantes = $res[0] - $total;
+                $restantes = $puntos - $total;
             }
 
             $pdo->beginTransaction();
@@ -97,30 +108,14 @@ session_start();
             $sent3 = $pdo->query("UPDATE usuarios 
                                   SET puntos = $restantes 
                                   WHERE id = $usuario_id");
-
         } else {
-
+            // Obtener el total de la factura
             $usuario = \App\Tablas\Usuario::logueado();
             $usuario_id = $usuario->id;
             $metodo_pago = obtener_post('metodo_pago');
-            $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id = $usuario_id");
-            $puntos = $sent2->fetch();
+            $puntos = $usuario->getPuntos();
+            $total = calcular_total_factura($carrito, $cupon_id);
 
-
-            // Obtener el total de la factura
-
-            $total = 0;
-
-            foreach ($carrito->getLineas() as $id => $linea) {
-                $articulo = $linea->getArticulo();
-                $codigo = $articulo->getCodigo();
-                $cantidad = $linea->getCantidad();
-                $precio = $articulo->getPrecio();
-                $oferta = $articulo->getOferta() ? $articulo->getOferta() : '';
-                $importe = $articulo->aplicarOferta($oferta, $cantidad, $precio)['importe'];
-                $ahorro = $articulo->aplicarOferta($oferta, $cantidad, $precio)['ahorro'];
-                $total += $importe;
-            }
 
             $pdo->beginTransaction();
             $sent = $pdo->prepare('INSERT INTO facturas (usuario_id, metodo_pago, cupon_id, total)
@@ -140,7 +135,7 @@ session_start();
             $execute = [':f' => $factura_id];
             $i = 1;
 
-            $sumaPuntos = round(($total / 2 + $puntos[0]));
+            $sumaPuntos = round(($total / 2 + $puntos));
 
 
             $sent3 = $pdo->prepare("UPDATE usuarios 
@@ -303,46 +298,34 @@ session_start();
                         <td class="text-center font-semibold">TOTAL:</td>
                         <td class="text-center font-semibold"><?= dinero($total) ?></td>
                     </tr>
-                    <?php if ($vacio && isset($cupon)) { ?>
+                    <?php if ($vacio && isset($cupon)) {
+                        $pdo = conectar();
+                        $cupones_ = $pdo->query("SELECT * FROM cupones WHERE cupon='" . hh($cupon) . "'");
+                        foreach ($cupones_ as $cupo) {
+                            $descuento = hh($cupo['descuento']);
+                            $total_descuento = $total - ($total * ($descuento / 100));
+                        }
+                    ?>
                         <tr>
                             <td colspan="3"></td>
                             <td class="text-center font-semibold">TOTAL con descuento</td>
-                            <?php
-                            $pdo = conectar();
-                            $cupones_ = $pdo->query("SELECT * FROM cupones WHERE cupon='" . hh($cupon) . "'");
-                            foreach ($cupones_ as $cupo) {
-                                $descuento = hh($cupo['descuento']);
-                                $total_descuento = $total - ($total * ($descuento / 100));
-                            }
-                            ?>
                             <td class="text-center font-semibold"><?= dinero($total_descuento) ?></td>
                             <td scope="col" class="py-3 px-6"> <?= $cupon ?> <?= $descuento ?> % </td>
                         </tr>
-                    <?php }  ?>
+                    <?php } ?>
 
                     <tr>
                         <td colspan="3"></td>
                         <td class="text-center font-semibold">TOTAL + IVA (21%):</td>
-                        <?php
-                        if ($vacio && isset($cupon)) {
-                            $pdo = conectar();
-                            $cupones_ = $pdo->query("SELECT * FROM cupones WHERE cupon='" . hh($cupon) . "'");
-                            foreach ($cupones_ as $cupo) {
-                                $descuento = hh($cupo['descuento']);
-                                $total_descuento = $total - ($total * ($descuento / 100));
-                            }
-                        ?>
-                            <td class="text-center font-semibold"><?= dinero($total_descuento * 1.21) ?></td>
-                        <?php } else { ?>
-                            <td class="text-center font-semibold"><?= dinero($total * 1.21) ?></td>
-                        <?php } ?>
+                        <td class="text-center font-semibold"><?= dinero($vacio && isset($cupon) ? ($total_descuento * 1.21) : ($total * 1.21)) ?></td>
                     </tr>
                 </tfoot>
             </table> <br>
             <div class="flex justify-center font-normal text-gray-700 dark:text-gray-400">
                 <label class="block mb-2 text-sm font-medium w-1/4 pr-4">
                     <input type="checkbox" name="_puntos" value="1">
-                    Utilizar los puntos acumulados
+                    <?php $usuario = \App\Tablas\Usuario::logueado(); ?>
+                    Utilizar los puntos acumulados: <?= $usuario->getPuntos() ?>
                 </label>
             </div> <br>
             <div class="flex justify-center">

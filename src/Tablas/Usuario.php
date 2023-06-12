@@ -19,6 +19,15 @@ class Usuario extends Modelo
         $this->validado = $campos['validado'];
     }
 
+    public function getPuntos()
+    {
+        $pdo = $pdo ?? conectar();
+        $sent2 = $pdo->query("SELECT puntos FROM usuarios WHERE id =  $this->id ");
+            $res = $sent2->fetch();
+        return $res[0];
+    }
+
+
     public function es_admin(): bool
     {
         return $this->usuario == 'admin';
