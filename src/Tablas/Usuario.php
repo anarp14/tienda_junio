@@ -72,13 +72,17 @@ class Usuario extends Modelo
             ));
     }
 
-    public static function registrar($login, $password, ?PDO $pdo = null)
+    public static function registrar($login, $nombre, $apellidos, $email, $password, ?PDO $pdo = null)
     {
-        $sent = $pdo->prepare('INSERT INTO usuarios (usuario, password, validado)
-                               VALUES (:login, :password, false)');
+        $sent = $pdo->prepare('INSERT INTO usuarios (usuario, nombre, apellidos, email, password, validado)
+                               VALUES (:login, :nombre, :apellidos, :email, :password, false)');
         $sent->execute([
             ':login' => $login,
-            ':password' => password_hash($password, PASSWORD_DEFAULT),
+            ':nombre' => $nombre,
+            ':apellidos' => $apellidos,
+            ':email' => $email,
+            ':password' => password_hash($password, PASSWORD_DEFAULT)
+            
         ]);
     }
 
